@@ -575,15 +575,33 @@ function renderDashboard(){
   const stageLabels=['Contactado','Catálogo','Cotización','Negociación'];
   const stageKeys=['Contactado','Catálogo enviado','Cotización enviada','Negociación'];
   const stageAvg=stageKeys.map(key=>{
+    // Tratos activos en esa etapa del filtro actual
     const active=d.filter(x=>x.estado===key&&x.fecha_creado);
-    if(!active.length)return 0;
+    if(!active.length) return null; // null = sin datos, no muestra barra
     return Math.round(active.reduce((a,x)=>a+daysAgo(x.fecha_creado),0)/active.length);
   });
   destroyChart('chartEtapaTiempo');
   charts['chartEtapaTiempo']=new Chart(document.getElementById('chartEtapaTiempo'),{
     type:'bar',
-    data:{labels:stageLabels,datasets:[{label:'Días promedio',data:stageAvg,backgroundColor:'#14b8a6',borderRadius:6}]},
-    options:{scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#2a3347'}}},plugins:{legend:{display:false}}}
+    data:{
+      labels:stageLabels,
+      datasets:[{
+        label:'Días promedio en etapa',
+        data:stageAvg,
+        backgroundColor:stageAvg.map(v=>v===null?'transparent':'#14b8a6'),
+        borderRadius:6
+      }]
+    },
+    options:{
+      scales:{
+        x:{ticks:{color:'#94a3b8'}},
+        y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'},beginAtZero:true}
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>ctx.raw===null?' Sin tratos con fecha':` ${ctx.raw} días promedio`}}
+      }
+    }
   });
 }
 
