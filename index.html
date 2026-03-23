@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Atakama</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;--sidebar:#161b27;--card:#1e2535;--card2:#252d3f;
+  --border:#2a3347;--accent:#3b82f6;--accent2:#1d4ed8;
+  --green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#8b5cf6;--orange:#f97316;--teal:#14b8a6;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+#sidebar{width:220px;min-width:220px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0}
+.logo{padding:8px 20px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.logo h1{font-size:18px;font-weight:700;color:#fff}.logo span{font-size:11px;color:var(--text3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text2);border-left:3px solid transparent;transition:.15s}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:var(--card);color:var(--accent);border-left-color:var(--accent)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-sep{height:1px;background:var(--border);margin:8px 20px}
+.nav-sync{padding:10px 20px;font-size:10px;color:var(--text3);display:flex;align-items:center;gap:6px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.sync-dot.error{background:var(--red)}.sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#main{flex:1;overflow:auto;padding:24px}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.page-sub{color:var(--text3);font-size:12px;margin-bottom:16px}
+.loading-overlay{position:fixed;inset:0;background:rgba(15,17,23,.8);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.global-search-wrap{position:relative;margin-bottom:18px}
+.global-search-wrap input{width:100%;padding:9px 14px 9px 36px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none}
+.global-search-wrap input:focus{border-color:var(--accent)}
+.global-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px}
+.search-results{position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:300px;overflow-y:auto;display:none}
+.search-results.show{display:block}
+.search-result-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.search-result-item:hover{background:var(--card2)}.search-result-item:last-child{border:none}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi-label{color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-val{font-size:21px;font-weight:700;color:#fff}.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.kpi.green .kpi-val{color:var(--green)}.kpi.blue .kpi-val{color:var(--accent)}
+.kpi.yellow .kpi-val{color:var(--yellow)}.kpi.red .kpi-val{color:var(--red)}.kpi.purple .kpi-val{color:var(--purple)}
+.canal-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.canal-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.canal-card h3{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;margin-bottom:10px}
+.canal-stat{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)}
+.canal-stat:last-child{border:none}.canal-stat span:first-child{color:var(--text2)}.canal-stat span:last-child{font-weight:600}
+.charts-row{display:grid;gap:12px;margin-bottom:14px}
+.charts-row-3{grid-template-columns:1fr 1fr 1fr}.charts-row-2{grid-template-columns:1.8fr 1fr}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.chart-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.funnel-wrap{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.funnel-col{background:var(--card);border:1px solid var(--border);border-radius:10px;min-height:500px;display:flex;flex-direction:column}
+.funnel-header{padding:10px 12px;border-bottom:1px solid var(--border)}
+.funnel-header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.funnel-header h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stage-count{background:var(--card2);border-radius:20px;padding:2px 7px;font-size:10px;color:var(--text2)}
+.stage-total{font-size:10px;color:var(--text3)}
+.funnel-cards{padding:8px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px}
+.deal-card{background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:9px;cursor:pointer;transition:.15s}
+.deal-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.deal-card.stale{border-left:3px solid var(--red)!important}
+.deal-card.no-date{border-left:3px solid var(--orange)}
+.deal-card.no-amount{border-left:3px solid var(--purple)}
+.deal-name{font-size:11px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-amt{font-size:11px;font-weight:600}
+.deal-amt.has-amt{color:var(--accent)}.deal-amt.no-amt{color:var(--text3)}
+.deal-meta{display:flex;justify-content:space-between;margin-top:5px;align-items:center;flex-wrap:wrap;gap:3px}
+.deal-resp{font-size:10px;color:var(--text3)}
+.deal-tags{display:flex;gap:3px;flex-wrap:wrap}
+.tag{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500}
+.tag-corp{background:#1e3a5f;color:#60a5fa}.tag-ws{background:#2d1b69;color:#c4b5fd}.tag-stale{background:#450a0a;color:#f87171}
+.deal-next{font-size:9px;color:var(--yellow);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col-contactado .funnel-header h3{color:#60a5fa}.col-catalogo .funnel-header h3{color:#a78bfa}
+.col-cotizacion .funnel-header h3{color:var(--yellow)}.col-negociacion .funnel-header h3{color:var(--orange)}
+.col-ganado .funnel-header h3{color:var(--green)}.col-perdido .funnel-header h3{color:var(--red)}
+.drop-active{border-color:var(--accent)!important;background:rgba(59,130,246,.08)!important}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-toolbar{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,textarea{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+.btn-danger{background:var(--red);color:#fff}.btn-success{background:#16a34a;color:#fff}
+.btn-sm{padding:4px 10px;font-size:11px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:9px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
+.badge{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600}
+.badge-cot{background:#1e3a5f;color:#60a5fa}.badge-cat{background:#2d1b69;color:#a78bfa}
+.badge-gan{background:#14532d;color:#4ade80}.badge-per{background:#450a0a;color:#f87171}
+.badge-neg{background:#431407;color:#fb923c}.badge-con{background:#1e293b;color:#94a3b8}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;width:580px;max-height:92vh;overflow-y:auto;padding:24px}
+.modal h2{font-size:15px;font-weight:700;margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:11px;color:var(--text2);font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%}
+.form-group textarea{resize:vertical;min-height:52px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+.edit-section{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.history-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px}
+.history-item:last-child{border:none}
+.history-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:3px;flex-shrink:0}
+.history-date{color:var(--text3);min-width:70px}.history-text{color:var(--text2)}
+.loss-reasons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.reason-btn{padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--card2);color:var(--text2);cursor:pointer;font-size:11px;text-align:center;transition:.15s}
+.reason-btn:hover,.reason-btn.sel{border-color:var(--red);color:var(--red);background:#450a0a33}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.alert-strip{background:#422006;border:1px solid #f97316;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#fb923c;display:flex;align-items:center;gap:8px}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e2535;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text);z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <span style="color:var(--text2);font-size:13px">Conectando con Supabase...</span>
+</div>
+
+<div id="sidebar">
+  <div class="logo"><h1>⛰ Atakama</h1><span>CRM Ventas</span></div>
+  <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+  <div class="nav-item" onclick="showPage('funnel')"><span class="nav-icon">🎯</span><span>Embudo</span></div>
+  <div class="nav-item" onclick="showPage('deals')"><span class="nav-icon">💼</span><span>Tratos</span></div>
+  <div class="nav-item" onclick="showPage('clients')"><span class="nav-icon">👥</span><span>Clientes</span></div>
+  <div class="nav-sep"></div>
+  <div class="nav-item" onclick="showPage('new')"><span class="nav-icon">➕</span><span>Nuevo Trato</span></div>
+  <div class="nav-sync"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Conectado</span></div>
+</div>
+
+<div id="main">
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">Resumen general · Atakama</div>
+  <div class="global-search-wrap">
+    <span class="global-search-icon">🔍</span>
+    <input type="text" id="global-search" placeholder="Buscar cliente, empresa o RUT..." oninput="globalSearch(this.value)" onblur="setTimeout(()=>hideGlobalResults(),200)">
+    <div class="search-results" id="search-results"></div>
+  </div>
+  <div class="filter-bar">
+    <select id="db-canal" onchange="renderDashboard()"><option value="all">Todos los canales</option><option value="Corporativo">Corporativo</option><option value="WS">Wholesale</option></select>
+    <select id="db-resp" onchange="renderDashboard()"><option value="all">Todos los vendedores</option><option value="Balta">Balta</option><option value="Ignacio">Ignacio</option><option value="Tomás">Tomás</option></select>
+    <select id="db-cat" onchange="renderDashboard()"><option value="all">Todas las categorías</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option></select>
+  </div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="canal-split" id="canal-split"></div>
+  <div class="charts-row charts-row-3">
+    <div class="chart-card"><div class="chart-title">Distribución por Estado</div><canvas id="chartEstado" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Tratos por Vendedor</div><canvas id="chartVendedor" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Canal de Fuente</div><canvas id="chartFuente" height="180"></canvas></div>
+  </div>
+  <div class="charts-row charts-row-2">
+    <div class="chart-card"><div class="chart-title">Tratos por Categoría</div><canvas id="chartCategoria" height="130"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Razones de Pérdida</div><canvas id="chartPerdida" height="130"></canvas></div>
+  </div>
+  <div class="charts-row" style="grid-template-columns:1fr 1fr">
+    <div class="chart-card"><div class="chart-title">Funnel de Conversión por Etapa</div><canvas id="chartFunnel" height="160"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Tiempo Promedio por Etapa (días)</div><canvas id="chartEtapaTiempo" height="160"></canvas></div>
+  </div>
+</div>
+
+<!-- EMBUDO -->
+<div id="page-funnel" class="page">
+  <div class="page-title">Embudo de Ventas</div>
+  <div class="page-sub"><span style="color:var(--red)">■</span> Sin actividad +3d &nbsp;<span style="color:var(--orange)">■</span> Sin fecha &nbsp;<span style="color:var(--purple)">■</span> Sin monto</div>
+  <div class="filter-bar">
+    <select id="fn-canal" onchange="renderFunnel()"><option value="all">Todos los canales</option><option value="Corporativo">Corporativo</option><option value="WS">Wholesale</option></select>
+    <select id="fn-resp" onchange="renderFunnel()"><option value="all">Todos los vendedores</option><option value="Balta">Balta</option><option value="Ignacio">Ignacio</option><option value="Tomás">Tomás</option></select>
+  </div>
+  <div id="funnel-alerts"></div>
+  <div class="funnel-wrap" id="funnel-wrap"></div>
+</div>
+
+<!-- TRATOS -->
+<div id="page-deals" class="page">
+  <div class="page-title">Tratos</div>
+  <div class="page-sub">Todos los tratos del sistema</div>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="deals-search" placeholder="🔍 Buscar..." style="width:170px" oninput="renderDealsTable()">
+      <select id="deals-estado" onchange="renderDealsTable()"><option value="all">Todos los estados</option><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option><option>Trato ganado</option><option>Trato perdido</option></select>
+      <select id="deals-resp" onchange="renderDealsTable()"><option value="all">Todos</option><option>Balta</option><option>Ignacio</option><option>Tomás</option></select>
+      <select id="deals-canal" onchange="renderDealsTable()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
+      <select id="deals-monto" onchange="renderDealsTable()"><option value="all">Todos los montos</option><option value="zero">Sin monto</option><option value="nonzero">Con monto</option></select>
+      <button class="btn btn-primary" onclick="showPage('new')">+ Nuevo Trato</button>
+    </div>
+    <table><thead><tr><th>#</th><th>Cliente</th><th>Empresa/RUT</th><th>Canal</th><th>Resp.</th><th>Monto</th><th>Estado</th><th>Próxima Acción</th><th></th></tr></thead>
+    <tbody id="deals-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- CLIENTES -->
+<div id="page-clients" class="page">
+  <div class="page-title">Clientes</div>
+  <div class="page-sub">Base de clientes registrados</div>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="cli-search" placeholder="🔍 Buscar..." style="width:190px" oninput="renderClientsTable()">
+      <select id="cli-canal" onchange="renderClientsTable()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
+    </div>
+    <table><thead><tr><th>Cliente</th><th>Empresa/RUT</th><th>Canal</th><th>Categoría</th><th>Resp.</th><th>Tratos</th><th>Valor Total</th><th>Fuente</th></tr></thead>
+    <tbody id="cli-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- NUEVO TRATO -->
+<div id="page-new" class="page">
+  <div class="page-title">Nuevo Trato</div>
+  <div class="page-sub">Ingresa los datos del trato</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px;max-width:640px">
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre del Cliente *</label><input type="text" id="nf-cliente"></div>
+      <div class="form-group"><label>Empresa / RUT</label><input type="text" id="nf-empresa"></div>
+      <div class="form-group"><label>Canal</label><select id="nf-canal"><option>Corporativo</option><option>WS</option></select></div>
+      <div class="form-group"><label>Categoría</label><select id="nf-cat"><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
+      <div class="form-group"><label>Responsable</label><select id="nf-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
+      <div class="form-group"><label>Monto ($)</label><input type="number" id="nf-monto" placeholder="0"></div>
+      <div class="form-group"><label>Estado inicial</label><select id="nf-estado"><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option></select></div>
+      <div class="form-group"><label>Canal de Fuente</label><select id="nf-fuente"><option value="">Sin especificar</option><option>Cliente Antiguo</option><option>Prospecto</option><option>Correo Atakama</option><option>Referido</option></select></div>
+      <div class="form-group"><label>Fecha Creado</label><input type="date" id="nf-fecha"></div>
+      <div class="form-group"><label>Fecha Próxima Acción</label><input type="date" id="nf-nextdate"></div>
+      <div class="form-group full"><label>Próxima Acción</label><input type="text" id="nf-next"></div>
+      <div class="form-group full"><label>Comentario</label><textarea id="nf-comentario"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" onclick="saveDeal()">💾 Guardar Trato</button>
+      <button class="btn btn-secondary" onclick="showPage('deals')">Cancelar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-bg" id="modal-edit">
+  <div class="modal">
+    <h2>✏️ <span id="edit-title"></span></h2>
+    <div class="edit-section">Información del cliente</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre del Cliente</label><input type="text" id="ef-cliente"></div>
+      <div class="form-group full"><label>Empresa / RUT</label><input type="text" id="ef-empresa"></div>
+      <div class="form-group"><label>Canal</label><select id="ef-canal"><option>Corporativo</option><option>WS</option></select></div>
+      <div class="form-group"><label>Categoría</label><select id="ef-cat"><option value="">Sin categoría</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
+      <div class="form-group"><label>Responsable</label><select id="ef-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
+      <div class="form-group"><label>Canal de Fuente</label><select id="ef-fuente"><option value="">Sin especificar</option><option>Cliente Antiguo</option><option>Prospecto</option><option>Correo Atakama</option><option>Referido</option></select></div>
+    </div>
+    <div class="edit-section">Estado y valores</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Estado</label><select id="ef-estado"><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option><option>Trato ganado</option><option>Trato perdido</option></select></div>
+      <div class="form-group"><label>Monto ($)</label><input type="number" id="ef-monto"></div>
+      <div class="form-group"><label>Fecha Creado</label><input type="date" id="ef-fechaCreado"></div>
+      <div class="form-group"><label>Fecha Ganado</label><input type="date" id="ef-fechaGanado"></div>
+      <div class="form-group"><label>Lifetime (días)</label><input type="number" id="ef-lifetime"></div>
+      <div class="form-group"><label>Razón Pérdida</label><select id="ef-razon"><option value="">-</option><option>Proveedor alternativo</option><option>Desiste de la compra</option><option>Solo cotiza</option><option>Falta de stock</option><option>Precio muy alto</option><option>Sin respuesta</option></select></div>
+    </div>
+    <div class="edit-section">Seguimiento</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Próxima Acción</label><input type="text" id="ef-next"></div>
+      <div class="form-group"><label>Fecha Próxima Acción</label><input type="date" id="ef-nextdate"></div>
+      <div class="form-group full"><label>Comentario</label><textarea id="ef-comentario"></textarea></div>
+    </div>
+    <div class="edit-section">Historial de actividad</div>
+    <div id="ef-history"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit')">Cancelar</button>
+      <button class="btn btn-danger btn-sm" id="ef-del-btn">🗑 Eliminar</button>
+      <button class="btn btn-success btn-sm" onclick="saveEdit()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PÉRDIDA -->
+<div class="modal-bg" id="modal-loss">
+  <div class="modal" style="width:420px">
+    <h2>¿Por qué se perdió el trato?</h2>
+    <div class="loss-reasons">
+      <div class="reason-btn" onclick="selReason(this,'Proveedor alternativo')">🏪 Proveedor alternativo</div>
+      <div class="reason-btn" onclick="selReason(this,'Desiste de la compra')">❌ Desiste de la compra</div>
+      <div class="reason-btn" onclick="selReason(this,'Solo cotiza')">📋 Solo cotiza</div>
+      <div class="reason-btn" onclick="selReason(this,'Falta de stock')">📦 Falta de stock</div>
+      <div class="reason-btn" onclick="selReason(this,'Precio muy alto')">💸 Precio muy alto</div>
+      <div class="reason-btn" onclick="selReason(this,'Sin respuesta')">👻 Sin respuesta</div>
+    </div>
+    <div class="form-group"><label>Comentario adicional</label><textarea id="loss-comment"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-loss')">Cancelar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmLoss()">Marcar como Perdido</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ── SUPABASE CONFIG ───────────────────────────────────────────────────────────
+const SB_URL='https://popzkkhsdkjuwlbveekg.supabase.co';
+const SB_KEY='sb_publishable_6-rSUIAtkTnlpnvR4zDRXQ_zPkOrC9m';
+const headers={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+async function sbGet(table,params=''){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${params}`,{headers:{...headers,'Prefer':'return=representation'}});
+  return r.json();
+}
+async function sbPost(table,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...headers,'Prefer':'return=representation'},body:JSON.stringify(body)});
+  return r.json();
+}
+async function sbPatch(table,id,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{...headers,'Prefer':'return=representation'},body:JSON.stringify(body)});
+  return r.json();
+}
+async function sbDelete(table,id){
+  await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers});
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let deals=[], historyMap={}, selectedReason='', pendingLossId=null, editingId=null, charts={};
+const STALE_DAYS=3;
+const PIE_COLORS=['#3b82f6','#8b5cf6','#f59e0b','#f97316','#22c55e','#ef4444','#06b6d4','#ec4899','#84cc16'];
+
+// ── SEED DATA ─────────────────────────────────────────────────────────────────
+const SEED=[
+  {cliente:'TANAX',empresa:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:3000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BUIN ZOO',empresa:'',canal:'Corporativo',cat:'Organización',fuente:'',resp:'Balta',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'EXPLORA TOALLAS',empresa:'',canal:'Corporativo',cat:'Hotel',fuente:'Cliente Antiguo',resp:'Balta',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CCU REGALO FIN DE AÑO',empresa:'CCU S.A.',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'VINCI COMPASS',empresa:'',canal:'Corporativo',cat:'Banco',fuente:'',resp:'Balta',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Conseguir mail',next_date:null,razon_perdida:''},
+  {cliente:'EXPLORA PANTUFLAS',empresa:'',canal:'Corporativo',cat:'Hotel',fuente:'Cliente Antiguo',resp:'Balta',monto:20000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BUK',empresa:'BUK S.A.',canal:'Corporativo',cat:'RRHH',fuente:'Cliente Antiguo',resp:'Balta',monto:30000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BCI',empresa:'Banco BCI',canal:'Corporativo',cat:'Banco',fuente:'',resp:'Balta',monto:34000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ENEX PROMO GRANDE VERANO',empresa:'ENEX S.A.',canal:'Corporativo',cat:'Energía',fuente:'Cliente Antiguo',resp:'Balta',monto:150000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Espera cotización proveedores',next_date:null,razon_perdida:''},
+  {cliente:'ENEX REGALO CORPORATIVO',empresa:'ENEX S.A.',canal:'Corporativo',cat:'Energía',fuente:'Cliente Antiguo',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CONCHA Y TORO',empresa:'',canal:'Corporativo',cat:'Viña',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ARIZTIA',empresa:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'HOTEL HANGA ROA',empresa:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:312827,estado:'Trato ganado',lifetime:7,fecha_creado:'2026-03-12',fecha_ganado:'2026-03-19',fecha_perdido:null,comentario:'Despachar a cliente',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ISABEL VIAL',empresa:'',canal:'Corporativo',cat:'Persona Natural',fuente:'Referido',resp:'Ignacio',monto:231139,estado:'Trato ganado',lifetime:3,fecha_creado:'2026-03-13',fecha_ganado:'2026-03-16',fecha_perdido:null,comentario:'Despachar a cliente',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'DESTINORIENTE',empresa:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Correo Atakama',resp:'Ignacio',monto:1990750,estado:'Trato ganado',lifetime:1,fecha_creado:'2026-02-25',fecha_ganado:'2026-02-26',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BEYOND',empresa:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:375433,estado:'Trato ganado',lifetime:6,fecha_creado:'2026-02-26',fecha_ganado:'2026-03-04',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'DISCOVERYMERCH',empresa:'',canal:'Corporativo',cat:'Marketing',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Reunión Martes 24/03',next_date:'2026-03-24',razon_perdida:''},
+  {cliente:'GEOTERRA VIAJES',empresa:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Posibilidad equipar guías',next_date:null,razon_perdida:''},
+  {cliente:'YPO',empresa:'',canal:'Corporativo',cat:'Organización',fuente:'Correo Atakama',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Seguimiento compra',next_date:null,razon_perdida:''},
+  {cliente:'BOMBEROS DE SANTIAGO',empresa:'',canal:'Corporativo',cat:'Organización',fuente:'Correo Atakama',resp:'Ignacio',monto:2800000,estado:'Trato perdido',lifetime:1,fecha_creado:'2026-03-16',fecha_ganado:null,fecha_perdido:'2026-03-17',comentario:'No quiso mochila, quiere ser proveedor',next_action:'',next_date:null,razon_perdida:'Desiste de la compra'},
+  {cliente:'HOTEL TERMAS DE CHILLÁN',empresa:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Conv. encargado bodega',next_date:null,razon_perdida:''},
+  {cliente:'BUK (Ignacio)',empresa:'BUK S.A.',canal:'Corporativo',cat:'RRHH',fuente:'Cliente Antiguo',resp:'Ignacio',monto:1062718,estado:'Trato ganado',lifetime:4,fecha_creado:'2026-03-05',fecha_ganado:'2026-03-09',fecha_perdido:null,comentario:'Entregado',next_action:'Esperar chaquetas venta 2',next_date:null,razon_perdida:''},
+  {cliente:'CCU (ROYAL)',empresa:'CCU S.A.',canal:'Corporativo',cat:'Consumo Masivo',fuente:'Cliente Antiguo',resp:'Ignacio',monto:3600000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-17',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Evaluando compra',next_date:null,razon_perdida:''},
+  {cliente:'CHILENATIVO',empresa:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Despachar muestras',next_date:null,razon_perdida:''},
+  {cliente:'BIZAGRA',empresa:'',canal:'Corporativo',cat:'Marketing',fuente:'Correo Atakama',resp:'Ignacio',monto:410550,estado:'Trato ganado',lifetime:1,fecha_creado:'2026-03-03',fecha_ganado:'2026-03-04',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'RIA MT',empresa:'',canal:'Corporativo',cat:'Banco',fuente:'Correo Atakama',resp:'Ignacio',monto:1195831,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-18',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando aprobación RRHH',next_date:null,razon_perdida:''},
+  {cliente:'MASTERCARD',empresa:'Mastercard Inc.',canal:'Corporativo',cat:'Banco',fuente:'Correo Atakama',resp:'Ignacio',monto:928345,estado:'Trato perdido',lifetime:1,fecha_creado:'2026-03-12',fecha_ganado:null,fecha_perdido:'2026-03-13',comentario:'No aprueban presupuesto',next_action:'',next_date:null,razon_perdida:'Precio muy alto'},
+  {cliente:'CHIPAX',empresa:'',canal:'Corporativo',cat:'Logística',fuente:'Correo Atakama',resp:'Ignacio',monto:2407510,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-13',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Compra segundo semestre',next_date:null,razon_perdida:''},
+  {cliente:'CCU',empresa:'CCU S.A.',canal:'Corporativo',cat:'Consumo Masivo',fuente:'Cliente Antiguo',resp:'Ignacio',monto:952992,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando stock chaqueta',next_date:null,razon_perdida:''},
+  {cliente:'ERMITAÑO EXPEDICIONES',empresa:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'TUR COPEC',empresa:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Correo Atakama',resp:'Ignacio',monto:330000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-20',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'HOTEL CASCADAS',empresa:'',canal:'WS',cat:'Hotel',fuente:'',resp:'Ignacio',monto:2500000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-13',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando OC',next_date:null,razon_perdida:''},
+  {cliente:'PLAYARTE MATANZA',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:653653,estado:'Trato ganado',lifetime:5,fecha_creado:'2026-03-12',fecha_ganado:'2026-03-17',fecha_perdido:null,comentario:'',next_action:'Enviar stock pantuflas flex',next_date:null,razon_perdida:''},
+  {cliente:'CHELECH',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:16000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'8 en marzo, 8 en abril',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'TIENDA PORVENIR',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:3043542,estado:'Trato ganado',lifetime:4,fecha_creado:'2026-03-09',fecha_ganado:'2026-03-13',fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'TRAVEL CLUB',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:4000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'BRAVIUM',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'INDUSMAT',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:3062000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'CASA ALICIA',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'TERRAOUTDOOR',empresa:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+];
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init(){
+  setSyncState('loading','Conectando...');
+  try {
+    const existing=await sbGet('deals','select=id&limit=1');
+    if(!existing.length){
+      showToast('Primera carga: migrando datos...');
+      for(const d of SEED){
+        const [row]=await sbPost('deals',d);
+        await sbPost('history',{deal_id:row.id,fecha:row.fecha_creado||new Date().toISOString().slice(0,10),texto:`Trato creado · ${row.estado}`});
+      }
+    }
+    await loadAll();
+    setSyncState('ok','Conectado');
+    document.getElementById('loading-overlay').style.display='none';
+    renderDashboard();
+  } catch(e){
+    setSyncState('error','Sin conexión');
+    document.getElementById('loading-overlay').innerHTML='<div style="text-align:center;color:#ef4444"><div style="font-size:32px">⚠️</div><div style="margin-top:8px">Error conectando con Supabase</div><div style="font-size:11px;color:#64748b;margin-top:4px">'+e.message+'</div></div>';
+  }
+}
+
+async function loadAll(){
+  const [ds,hs]=await Promise.all([
+    sbGet('deals','select=*&order=fecha_creado.desc.nullslast'),
+    sbGet('history','select=*&order=created_at.asc')
+  ]);
+  deals=ds;
+  historyMap={};
+  hs.forEach(h=>{if(!historyMap[h.deal_id])historyMap[h.deal_id]=[];historyMap[h.deal_id].push(h);});
+}
+
+function setSyncState(state,label){
+  const dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-label');
+  dot.className='sync-dot'+(state==='error'?' error':state==='loading'?' loading':'');
+  lbl.textContent=label;
+}
+
+function showToast(msg,dur=2500){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const fmt=n=>n>0?'$'+n.toLocaleString('es-CL'):'-';
+const badgeClass=s=>({'Cotización enviada':'badge-cot','Catálogo enviado':'badge-cat','Trato ganado':'badge-gan','Trato perdido':'badge-per','Negociación':'badge-neg','Contactado':'badge-con'}[s]||'badge-con');
+const today=()=>new Date().toISOString().slice(0,10);
+const daysAgo=d=>{if(!d)return 999;return Math.round((new Date()-new Date(d))/(1000*60*60*24));};
+const isStale=deal=>{
+  if(['Trato ganado','Trato perdido'].includes(deal.estado))return false;
+  const hist=historyMap[deal.id]||[];
+  const last=hist.length?hist[hist.length-1].fecha:deal.fecha_creado;
+  return daysAgo(last)>=STALE_DAYS;
+};
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const nm={dashboard:0,funnel:1,deals:2,clients:3,new:5};
+  if(nm[p]!==undefined)document.querySelectorAll('.nav-item')[nm[p]]?.classList.add('active');
+  if(p==='dashboard')renderDashboard();
+  if(p==='funnel')renderFunnel();
+  if(p==='deals')renderDealsTable();
+  if(p==='clients')renderClientsTable();
+  if(p==='new')resetNewForm();
+}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function destroyChart(id){if(charts[id]){charts[id].destroy();charts[id]=null;}}
+
+// PIE with permanent % labels
+const pctPlugin={id:'pctLabels',afterDatasetsDraw(chart){
+  const {ctx,data:cd}=chart;
+  const total=cd.datasets[0].data.reduce((a,b)=>a+b,0);
+  cd.datasets.forEach((ds,di)=>{
+    chart.getDatasetMeta(di).data.forEach((arc,i)=>{
+      const val=ds.data[i];if(!val)return;
+      const pct=Math.round(val/total*100);if(pct<6)return;
+      const {x,y}=arc.tooltipPosition();
+      ctx.save();ctx.fillStyle='#fff';ctx.font='bold 10px Segoe UI';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=4;
+      ctx.fillText(pct+'%',x,y);ctx.restore();
+    });
+  });
+}};
+function makePieChart(id,labels,data){
+  destroyChart(id);
+  const total=data.reduce((a,b)=>a+b,0);
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:PIE_COLORS.slice(0,labels.length),borderWidth:2,borderColor:'#1e2535'}]},
+    options:{cutout:'46%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:6}},tooltip:{callbacks:{label:ctx=>{const pct=total?Math.round(ctx.raw/total*100):0;return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;}}}},layout:{padding:4}},
+    plugins:[pctPlugin]
+  });
+}
+
+function getFiltered(){
+  const canal=document.getElementById('db-canal')?.value||'all';
+  const resp=document.getElementById('db-resp')?.value||'all';
+  const cat=document.getElementById('db-cat')?.value||'all';
+  return deals.filter(d=>(canal==='all'||d.canal===canal)&&(resp==='all'||d.resp===resp)&&(cat==='all'||d.cat===cat));
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const d=getFiltered();
+  const ganados=d.filter(x=>x.estado==='Trato ganado');
+  const perdidos=d.filter(x=>x.estado==='Trato perdido');
+  const activos=d.filter(x=>!['Trato ganado','Trato perdido'].includes(x.estado));
+  const totalGanado=ganados.reduce((a,x)=>a+x.monto,0);
+  const aov=ganados.length?Math.round(totalGanado/ganados.length):0;
+  const lts=ganados.filter(x=>x.lifetime>0).map(x=>x.lifetime);
+  const durProm=lts.length?(lts.reduce((a,b)=>a+b,0)/lts.length).toFixed(1):'-';
+  const cotizados=d.filter(x=>['Cotización enviada','Trato ganado','Trato perdido'].includes(x.estado));
+  const conv=cotizados.length?Math.round(ganados.length/cotizados.length*100):0;
+  const pipeline=activos.reduce((a,x)=>a+x.monto,0);
+
+  document.getElementById('kpi-grid').innerHTML=`
+    <div class="kpi green"><div class="kpi-label">Tratos Ganados</div><div class="kpi-val">${ganados.length}</div><div class="kpi-sub">${fmt(totalGanado)}</div></div>
+    <div class="kpi blue"><div class="kpi-label">Pipeline Activo</div><div class="kpi-val">${fmt(pipeline)}</div><div class="kpi-sub">${activos.length} tratos abiertos</div></div>
+    <div class="kpi yellow"><div class="kpi-label">AOV</div><div class="kpi-val">${fmt(aov)}</div><div class="kpi-sub">Ticket promedio ganados</div></div>
+    <div class="kpi purple"><div class="kpi-label">Duración Prom.</div><div class="kpi-val">${durProm} días</div><div class="kpi-sub">Creación → Cierre</div></div>
+    <div class="kpi"><div class="kpi-label">Conversión</div><div class="kpi-val">${conv}%</div><div class="kpi-sub">Cotizados → Ganados</div></div>
+    <div class="kpi red"><div class="kpi-label">Tratos Perdidos</div><div class="kpi-val">${perdidos.length}</div><div class="kpi-sub">${fmt(perdidos.reduce((a,x)=>a+x.monto,0))}</div></div>
+  `;
+
+  document.getElementById('canal-split').innerHTML=['Corporativo','WS'].map(c=>{
+    const cd=deals.filter(x=>x.canal===c);
+    const cg=cd.filter(x=>x.estado==='Trato ganado');
+    const cCot=cd.filter(x=>['Cotización enviada','Trato ganado','Trato perdido'].includes(x.estado));
+    const aovC=cg.length?Math.round(cg.reduce((a,x)=>a+x.monto,0)/cg.length):0;
+    return `<div class="canal-card">
+      <h3>${c==='WS'?'🛍 Wholesale':'🏢 Corporativo'}</h3>
+      <div class="canal-stat"><span>Tratos totales</span><span>${cd.length}</span></div>
+      <div class="canal-stat"><span>Tratos ganados</span><span style="color:var(--green)">${cg.length}</span></div>
+      <div class="canal-stat"><span>Conversión</span><span>${cCot.length?Math.round(cg.length/cCot.length*100):0}%</span></div>
+      <div class="canal-stat"><span>Vol. ganado</span><span>${fmt(cg.reduce((a,x)=>a+x.monto,0))}</span></div>
+      <div class="canal-stat"><span>Vol. cotizado</span><span>${fmt(cd.filter(x=>x.estado==='Cotización enviada').reduce((a,x)=>a+x.monto,0))}</span></div>
+      <div class="canal-stat"><span>AOV</span><span>${fmt(aovC)}</span></div>
+    </div>`;
+  }).join('');
+
+  const estados=['Contactado','Catálogo enviado','Cotización enviada','Negociación','Trato ganado','Trato perdido'];
+  makePieChart('chartEstado',estados,estados.map(e=>d.filter(x=>x.estado===e).length));
+
+  const resps=['Balta','Ignacio','Tomás'];
+  destroyChart('chartVendedor');
+  charts['chartVendedor']=new Chart(document.getElementById('chartVendedor'),{
+    type:'bar',
+    data:{labels:resps,datasets:[
+      {label:'Ganados',data:resps.map(r=>d.filter(x=>x.resp===r&&x.estado==='Trato ganado').length),backgroundColor:'#22c55e',borderRadius:4},
+      {label:'Activos',data:resps.map(r=>d.filter(x=>x.resp===r&&!['Trato ganado','Trato perdido'].includes(x.estado)).length),backgroundColor:'#3b82f6',borderRadius:4},
+      {label:'Perdidos',data:resps.map(r=>d.filter(x=>x.resp===r&&x.estado==='Trato perdido').length),backgroundColor:'#ef4444',borderRadius:4},
+    ]},
+    options:{scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}}},plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},barPercentage:.7}
+  });
+
+  const fuentes=['Cliente Antiguo','Prospecto','Correo Atakama','Referido','Sin especificar'];
+  makePieChart('chartFuente',fuentes,fuentes.map(f=>d.filter(x=>(x.fuente||'Sin especificar')===f).length));
+
+  const knownCats=[...new Set(deals.map(x=>x.cat).filter(Boolean))];
+  const sinCat=d.filter(x=>!x.cat).length;
+  const cats=sinCat>0?[...knownCats,'Sin categoría']:knownCats;
+  const catCounts=[...knownCats.map(c=>d.filter(x=>x.cat===c).length),...(sinCat>0?[sinCat]:[])];
+  const catSorted=cats.map((c,i)=>({c,n:catCounts[i]})).sort((a,b)=>b.n-a.n).filter(x=>x.n>0);
+  destroyChart('chartCategoria');
+  charts['chartCategoria']=new Chart(document.getElementById('chartCategoria'),{
+    type:'bar',
+    data:{labels:catSorted.map(x=>x.c.length>12?x.c.slice(0,12)+'…':x.c),datasets:[{label:'Tratos',data:catSorted.map(x=>x.n),backgroundColor:catSorted.map((_,i)=>PIE_COLORS[i%PIE_COLORS.length]),borderRadius:4}]},
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const tot=d.filter(x=>(x.cat||'Sin categoría')===catSorted[ctx.dataIndex]?.c).reduce((a,x)=>a+x.monto,0);return ` ${ctx.raw} tratos · ${fmt(tot)}`;}}}}}
+  });
+
+  const reasons=['Proveedor alternativo','Desiste de la compra','Solo cotiza','Falta de stock','Precio muy alto','Sin respuesta'];
+  const rCounts=reasons.map(r=>d.filter(x=>x.razon_perdida===r).length);
+  destroyChart('chartPerdida');
+  charts['chartPerdida']=new Chart(document.getElementById('chartPerdida'),{
+    type:'bar',
+    data:{labels:reasons.map(r=>r.length>16?r.slice(0,16)+'…':r),datasets:[{data:rCounts,backgroundColor:rCounts.map(n=>n>0?'#ef4444':'#2a3347'),borderRadius:4}]},
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'},min:0},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false}}}
+  });
+
+  const funnelCounts=[
+    d.filter(x=>x.estado==='Contactado').length,
+    d.filter(x=>x.estado==='Catálogo enviado').length,
+    d.filter(x=>x.estado==='Cotización enviada').length,
+    d.filter(x=>x.estado==='Negociación').length,
+    d.filter(x=>x.estado==='Trato ganado').length,
+  ];
+  destroyChart('chartFunnel');
+  charts['chartFunnel']=new Chart(document.getElementById('chartFunnel'),{
+    type:'bar',
+    data:{labels:['Contactado','Catálogo','Cotización','Negociación','Ganado'],datasets:[{data:funnelCounts,backgroundColor:['#60a5fa','#a78bfa','#f59e0b','#f97316','#22c55e'],borderRadius:6}]},
+    options:{scales:{x:{ticks:{color:'#94a3b8',font:{size:10}}},y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const prev=funnelCounts[ctx.dataIndex-1];const pct=prev&&prev>0?Math.round(ctx.raw/prev*100):100;return ` ${ctx.raw} tratos${ctx.dataIndex>0?' ('+pct+'% del anterior)':''}`;}}}}}}
+  );
+
+  const stageLabels=['Contactado','Catálogo','Cotización','Negociación'];
+  const stageKeys=['Contactado','Catálogo enviado','Cotización enviada','Negociación'];
+  const stageAvg=stageKeys.map(key=>{
+    const active=d.filter(x=>x.estado===key&&x.fecha_creado);
+    if(!active.length)return 0;
+    return Math.round(active.reduce((a,x)=>a+daysAgo(x.fecha_creado),0)/active.length);
+  });
+  destroyChart('chartEtapaTiempo');
+  charts['chartEtapaTiempo']=new Chart(document.getElementById('chartEtapaTiempo'),{
+    type:'bar',
+    data:{labels:stageLabels,datasets:[{label:'Días promedio',data:stageAvg,backgroundColor:'#14b8a6',borderRadius:6}]},
+    options:{scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#2a3347'}}},plugins:{legend:{display:false}}}
+  });
+}
+
+// ── FUNNEL ────────────────────────────────────────────────────────────────────
+function renderFunnel(){
+  const canal=document.getElementById('fn-canal')?.value||'all';
+  const resp=document.getElementById('fn-resp')?.value||'all';
+  const d=deals.filter(x=>(canal==='all'||x.canal===canal)&&(resp==='all'||x.resp===resp));
+  const staleList=d.filter(x=>isStale(x));
+  document.getElementById('funnel-alerts').innerHTML=staleList.length?
+    `<div class="alert-strip">⏰ ${staleList.length} trato(s) sin actividad +${STALE_DAYS} días: ${staleList.map(x=>x.cliente).join(', ')}</div>`:'';
+  const stages=[
+    {key:'Contactado',cls:'col-contactado',label:'Contactado'},
+    {key:'Catálogo enviado',cls:'col-catalogo',label:'Catálogo'},
+    {key:'Cotización enviada',cls:'col-cotizacion',label:'Cotización'},
+    {key:'Negociación',cls:'col-negociacion',label:'Negociación'},
+    {key:'Trato ganado',cls:'col-ganado',label:'✅ Ganado'},
+    {key:'Trato perdido',cls:'col-perdido',label:'❌ Perdido'},
+  ];
+  document.getElementById('funnel-wrap').innerHTML=stages.map(s=>{
+    const items=d.filter(x=>x.estado===s.key).sort((a,b)=>{
+      if(!a.fecha_creado&&!b.fecha_creado)return 0;
+      if(!a.fecha_creado)return 1;if(!b.fecha_creado)return -1;
+      return new Date(b.fecha_creado)-new Date(a.fecha_creado);
+    });
+    const total=items.reduce((a,x)=>a+x.monto,0);
+    return `<div class="funnel-col ${s.cls}"
+      ondragover="event.preventDefault();this.classList.add('drop-active')"
+      ondragleave="this.classList.remove('drop-active')"
+      ondrop="dropDeal(event,'${s.key}')">
+      <div class="funnel-header">
+        <div class="funnel-header-top"><h3>${s.label}</h3><span class="stage-count">${items.length}</span></div>
+        ${total>0?`<div class="stage-total">${fmt(total)}</div>`:''}
+      </div>
+      <div class="funnel-cards">${items.map(deal=>{
+        const stale=isStale(deal);
+        let cls='deal-card';
+        if(stale)cls+=' stale';
+        else if(!deal.fecha_creado)cls+=' no-date';
+        else if(deal.monto===0)cls+=' no-amount';
+        const hist=historyMap[deal.id]||[];
+        const lastDate=hist.length?hist[hist.length-1].fecha:deal.fecha_creado;
+        return `<div class="${cls}" draggable="true" ondragstart="dragDeal(event,${deal.id})" onclick="openEdit(${deal.id})">
+          <div class="deal-name">${deal.cliente}</div>
+          <div class="deal-amt ${deal.monto>0?'has-amt':'no-amt'}">${deal.monto>0?fmt(deal.monto):'Sin monto'}</div>
+          <div class="deal-meta">
+            <span class="deal-resp">${deal.resp}</span>
+            <div class="deal-tags">
+              <span class="tag ${deal.canal==='WS'?'tag-ws':'tag-corp'}">${deal.canal}</span>
+              ${stale?`<span class="tag tag-stale">${daysAgo(lastDate)}d</span>`:''}
+            </div>
+          </div>
+          ${deal.next_action?`<div class="deal-next">▶ ${deal.next_action}${deal.next_date?' · '+deal.next_date.slice(5):''}</div>`:''}
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+let dragId=null;
+function dragDeal(e,id){dragId=id;e.dataTransfer.effectAllowed='move';}
+async function dropDeal(e,stage){
+  e.preventDefault();e.currentTarget.classList.remove('drop-active');
+  if(!dragId)return;
+  const deal=deals.find(d=>d.id===dragId);dragId=null;if(!deal)return;
+  if(stage==='Trato perdido'){pendingLossId=deal.id;selectedReason='';document.getElementById('modal-loss').classList.add('show');return;}
+  if(deal.estado===stage)return;
+  setSyncState('loading','Guardando...');
+  const upd={estado:stage};
+  if(stage==='Trato ganado'&&!deal.fecha_ganado)upd.fecha_ganado=today();
+  await sbPatch('deals',deal.id,upd);
+  await sbPost('history',{deal_id:deal.id,fecha:today(),texto:`→ ${stage}`});
+  await loadAll();
+  setSyncState('ok','Conectado');
+  showToast('✅ Trato actualizado');
+  renderFunnel();
+}
+
+// ── EDIT ──────────────────────────────────────────────────────────────────────
+function openEdit(id){
+  editingId=id;
+  const d=deals.find(x=>x.id===id);if(!d)return;
+  document.getElementById('edit-title').textContent=d.cliente;
+  document.getElementById('ef-cliente').value=d.cliente;
+  document.getElementById('ef-empresa').value=d.empresa||'';
+  document.getElementById('ef-canal').value=d.canal;
+  document.getElementById('ef-cat').value=d.cat||'';
+  document.getElementById('ef-resp').value=d.resp;
+  document.getElementById('ef-fuente').value=d.fuente||'';
+  document.getElementById('ef-estado').value=d.estado;
+  document.getElementById('ef-monto').value=d.monto||0;
+  document.getElementById('ef-fechaCreado').value=d.fecha_creado||'';
+  document.getElementById('ef-fechaGanado').value=d.fecha_ganado||'';
+  document.getElementById('ef-lifetime').value=d.lifetime||0;
+  document.getElementById('ef-razon').value=d.razon_perdida||'';
+  document.getElementById('ef-next').value=d.next_action||'';
+  document.getElementById('ef-nextdate').value=d.next_date||'';
+  document.getElementById('ef-comentario').value=d.comentario||'';
+  const hist=historyMap[id]||[];
+  document.getElementById('ef-history').innerHTML=hist.length?
+    hist.slice().reverse().map(h=>`<div class="history-item"><div class="history-dot"></div><span class="history-date">${h.fecha.slice(5)}</span><span class="history-text">${h.texto}</span></div>`).join(''):
+    '<p style="color:var(--text3);font-size:11px">Sin historial registrado.</p>';
+  document.getElementById('ef-del-btn').onclick=()=>{
+    if(confirm('¿Eliminar este trato?')){deleteDeal(id);}
+  };
+  document.getElementById('modal-edit').classList.add('show');
+}
+
+async function saveEdit(){
+  const d=deals.find(x=>x.id===editingId);if(!d)return;
+  const newEstado=document.getElementById('ef-estado').value;
+  if(newEstado==='Trato perdido'&&!document.getElementById('ef-razon').value){alert('Selecciona una razón de pérdida.');return;}
+  setSyncState('loading','Guardando...');
+  const upd={
+    cliente:document.getElementById('ef-cliente').value.trim().toUpperCase(),
+    empresa:document.getElementById('ef-empresa').value,
+    canal:document.getElementById('ef-canal').value,
+    cat:document.getElementById('ef-cat').value,
+    resp:document.getElementById('ef-resp').value,
+    fuente:document.getElementById('ef-fuente').value,
+    estado:newEstado,
+    monto:parseFloat(document.getElementById('ef-monto').value)||0,
+    fecha_creado:document.getElementById('ef-fechaCreado').value||null,
+    fecha_ganado:document.getElementById('ef-fechaGanado').value||null,
+    lifetime:parseInt(document.getElementById('ef-lifetime').value)||0,
+    razon_perdida:document.getElementById('ef-razon').value,
+    next_action:document.getElementById('ef-next').value,
+    next_date:document.getElementById('ef-nextdate').value||null,
+    comentario:document.getElementById('ef-comentario').value,
+  };
+  if(newEstado!==d.estado){
+    const note=newEstado==='Trato ganado'?'→ Trato ganado':newEstado==='Trato perdido'?`→ Trato perdido · ${upd.razon_perdida}`:`→ ${newEstado}`;
+    await sbPost('history',{deal_id:d.id,fecha:today(),texto:note});
+    if(newEstado==='Trato ganado'&&!upd.fecha_ganado)upd.fecha_ganado=today();
+  }
+  await sbPatch('deals',d.id,upd);
+  await loadAll();
+  setSyncState('ok','Conectado');
+  showToast('✅ Guardado');
+  closeModal('modal-edit');
+  renderDealsTable();renderFunnel();
+  if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();
+}
+
+async function deleteDeal(id){
+  setSyncState('loading','Eliminando...');
+  await sbDelete('deals',id);
+  await loadAll();
+  setSyncState('ok','Conectado');
+  showToast('🗑 Trato eliminado');
+  closeModal('modal-edit');
+  renderDealsTable();renderFunnel();
+}
+
+// ── DEALS TABLE ───────────────────────────────────────────────────────────────
+function renderDealsTable(){
+  const q=(document.getElementById('deals-search')?.value||'').toLowerCase();
+  const est=document.getElementById('deals-estado')?.value||'all';
+  const resp=document.getElementById('deals-resp')?.value||'all';
+  const canal=document.getElementById('deals-canal')?.value||'all';
+  const monto=document.getElementById('deals-monto')?.value||'all';
+  const filtered=deals.filter(d=>
+    (d.cliente.toLowerCase().includes(q)||(d.empresa||'').toLowerCase().includes(q))&&
+    (est==='all'||d.estado===est)&&(resp==='all'||d.resp===resp)&&
+    (canal==='all'||d.canal===canal)&&(monto==='all'||(monto==='zero'?d.monto===0:d.monto>0))
+  );
+  document.getElementById('deals-tbody').innerHTML=filtered.map(d=>`
+    <tr>
+      <td style="color:var(--text3);font-size:11px">${d.id}</td>
+      <td style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="openEdit(${d.id})">${d.cliente}</td>
+      <td style="font-size:11px;color:var(--text2)">${d.empresa||'-'}</td>
+      <td><span class="tag ${d.canal==='WS'?'tag-ws':'tag-corp'}">${d.canal}</span></td>
+      <td>${d.resp}</td>
+      <td style="font-weight:600">${d.monto>0?fmt(d.monto):'<span style="color:var(--text3)">-</span>'}</td>
+      <td><span class="badge ${badgeClass(d.estado)}">${d.estado}</span></td>
+      <td style="color:var(--yellow);font-size:11px;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.next_action||''}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="openEdit(${d.id})">✏️</button></td>
+    </tr>`).join('');
+}
+
+function renderClientsTable(){
+  const q=(document.getElementById('cli-search')?.value||'').toLowerCase();
+  const canal=document.getElementById('cli-canal')?.value||'all';
+  const map={};
+  deals.filter(d=>(d.cliente.toLowerCase().includes(q)||(d.empresa||'').toLowerCase().includes(q))&&(canal==='all'||d.canal===canal)).forEach(d=>{
+    if(!map[d.cliente])map[d.cliente]={cliente:d.cliente,empresa:d.empresa||'',canal:d.canal,cat:d.cat,resp:d.resp,tratos:0,total:0,fuente:d.fuente};
+    map[d.cliente].tratos++;map[d.cliente].total+=d.monto;
+  });
+  document.getElementById('cli-tbody').innerHTML=Object.values(map).map(c=>`
+    <tr>
+      <td style="font-weight:600">${c.cliente}</td>
+      <td style="font-size:11px;color:var(--text2)">${c.empresa||'-'}</td>
+      <td><span class="tag ${c.canal==='WS'?'tag-ws':'tag-corp'}">${c.canal}</span></td>
+      <td style="color:var(--text3);font-size:11px">${c.cat||'-'}</td>
+      <td>${c.resp}</td>
+      <td style="text-align:center">${c.tratos}</td>
+      <td style="font-weight:600;color:var(--accent)">${fmt(c.total)}</td>
+      <td style="font-size:11px;color:var(--text3)">${c.fuente||'-'}</td>
+    </tr>`).join('');
+}
+
+function globalSearch(q){
+  if(!q||q.length<2){hideGlobalResults();return;}
+  const ql=q.toLowerCase();
+  const results=deals.filter(d=>d.cliente.toLowerCase().includes(ql)||(d.empresa||'').toLowerCase().includes(ql)||(d.cat||'').toLowerCase().includes(ql));
+  const el=document.getElementById('search-results');
+  if(!results.length){el.innerHTML='<div class="search-result-item" style="color:var(--text3)">Sin resultados</div>';el.classList.add('show');return;}
+  el.innerHTML=results.slice(0,8).map(d=>`
+    <div class="search-result-item" onclick="openEdit(${d.id});hideGlobalResults()">
+      <div><span style="font-weight:600;color:var(--accent)">${d.cliente}</span>${d.empresa?` <span style="color:var(--text3);font-size:11px">· ${d.empresa}</span>`:''}</div>
+      <div style="display:flex;gap:6px;align-items:center"><span class="badge ${badgeClass(d.estado)}">${d.estado}</span><span style="color:var(--text3);font-size:10px">${d.resp}</span></div>
+    </div>`).join('');
+  el.classList.add('show');
+}
+function hideGlobalResults(){document.getElementById('search-results').classList.remove('show');}
+
+function resetNewForm(){
+  ['nf-cliente','nf-empresa','nf-monto','nf-comentario','nf-next'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('nf-fecha').value=today();
+  document.getElementById('nf-nextdate').value='';
+}
+
+async function saveDeal(){
+  const cliente=document.getElementById('nf-cliente').value.trim();
+  if(!cliente){alert('Ingresa el nombre del cliente');return;}
+  const estado=document.getElementById('nf-estado').value;
+  setSyncState('loading','Guardando...');
+  const [row]=await sbPost('deals',{
+    cliente:cliente.toUpperCase(),empresa:document.getElementById('nf-empresa').value,
+    canal:document.getElementById('nf-canal').value,cat:document.getElementById('nf-cat').value,
+    fuente:document.getElementById('nf-fuente').value,resp:document.getElementById('nf-resp').value,
+    monto:parseFloat(document.getElementById('nf-monto').value)||0,estado,lifetime:0,
+    fecha_creado:document.getElementById('nf-fecha').value||null,
+    fecha_ganado:null,fecha_perdido:null,
+    comentario:document.getElementById('nf-comentario').value,
+    next_action:document.getElementById('nf-next').value,
+    next_date:document.getElementById('nf-nextdate').value||null,
+    razon_perdida:''
+  });
+  await sbPost('history',{deal_id:row.id,fecha:today(),texto:`Trato creado · ${estado}`});
+  await loadAll();
+  setSyncState('ok','Conectado');
+  showToast('✅ Trato creado');
+  showPage('deals');
+}
+
+function selReason(el,r){document.querySelectorAll('.reason-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');selectedReason=r;}
+
+async function confirmLoss(){
+  if(!selectedReason){alert('Selecciona una razón de pérdida');return;}
+  const d=deals.find(x=>x.id===pendingLossId);if(!d)return;
+  setSyncState('loading','Guardando...');
+  const comment=document.getElementById('loss-comment').value;
+  await sbPatch('deals',d.id,{
+    estado:'Trato perdido',razon_perdida:selectedReason,
+    fecha_perdido:today(),
+    comentario:comment?(d.comentario?d.comentario+' | ':'')+comment:d.comentario
+  });
+  await sbPost('history',{deal_id:d.id,fecha:today(),texto:`→ Trato perdido · ${selectedReason}`});
+  await loadAll();
+  setSyncState('ok','Conectado');
+  showToast('Trato marcado como perdido');
+  document.getElementById('loss-comment').value='';
+  closeModal('modal-loss');
+  renderFunnel();renderDealsTable();
+}
+
+init();
+</script>
+</body>
+</html>
