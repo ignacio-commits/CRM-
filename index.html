@@ -3,645 +3,894 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cotizador Atakama Outdoor</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<title>CRM Atakama</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#f4f4f4;color:#1a1a1a;font-size:14px}
-header{background:#1a1a1a;padding:10px 24px;display:flex;align-items:center}
-.app{max-width:960px;margin:0 auto;padding:20px}
-.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:20px;margin-bottom:16px}
-.card-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #eee}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.field label{font-size:11px;color:#888;margin-bottom:4px;display:block;font-weight:500}
-input{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;color:#1a1a1a;outline:none;background:#fff}
-input:focus{border-color:#1a1a1a}
-.search-wrap{position:relative}
-.dd{position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:8px;z-index:999;max-height:260px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);display:none}
-.dd-head{display:grid;grid-template-columns:140px 1fr 100px;gap:8px;padding:6px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#999;border-bottom:1px solid #eee;background:#f9f9f9}
-.dd-row{display:grid;grid-template-columns:140px 1fr 100px;gap:8px;align-items:center;padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0}
-.dd-row:last-child{border-bottom:none}
-.dd-row:hover{background:#f5f5f5}
-.dd-sku{font-size:11px;font-family:monospace;font-weight:700}
-.dd-name{font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dd-price{font-size:12px;font-weight:600;text-align:right}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;--sidebar:#161b27;--card:#1e2535;--card2:#252d3f;
+  --border:#2a3347;--accent:#3b82f6;--accent2:#1d4ed8;
+  --green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#8b5cf6;--orange:#f97316;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+#sidebar{width:220px;min-width:220px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0}
+.logo{padding:8px 20px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.logo span{font-size:11px;color:var(--text3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text2);border-left:3px solid transparent;transition:.15s}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:var(--card);color:var(--accent);border-left-color:var(--accent)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-sep{height:1px;background:var(--border);margin:8px 20px}
+.nav-sync{padding:10px 20px;font-size:10px;color:var(--text3);display:flex;align-items:center;gap:6px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.sync-dot.error{background:var(--red)}.sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#main{flex:1;overflow:auto;padding:24px}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.page-sub{color:var(--text3);font-size:12px;margin-bottom:16px}
+.loading-overlay{position:fixed;inset:0;background:rgba(15,17,23,.85);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gs-wrap{position:relative;margin-bottom:18px}
+.gs-wrap input{width:100%;padding:9px 14px 9px 36px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none}
+.gs-wrap input:focus{border-color:var(--accent)}
+.gs-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3)}
+.search-results{position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:300px;overflow-y:auto;display:none}
+.search-results.show{display:block}
+.sr-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.sr-item:hover{background:var(--card2)}.sr-item:last-child{border:none}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi-label{color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-val{font-size:21px;font-weight:700;color:#fff}.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.kpi.green .kpi-val{color:var(--green)}.kpi.blue .kpi-val{color:var(--accent)}
+.kpi.yellow .kpi-val{color:var(--yellow)}.kpi.red .kpi-val{color:var(--red)}.kpi.purple .kpi-val{color:var(--purple)}
+.canal-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.canal-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.canal-card h3{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;margin-bottom:10px}
+.canal-stat{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)}
+.canal-stat:last-child{border:none}.canal-stat span:first-child{color:var(--text2)}.canal-stat span:last-child{font-weight:600}
+.charts-row{display:grid;gap:12px;margin-bottom:14px}
+.cr3{grid-template-columns:1fr 1fr 1fr}.cr2{grid-template-columns:1.8fr 1fr}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.chart-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.funnel-wrap{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.funnel-col{background:var(--card);border:1px solid var(--border);border-radius:10px;min-height:500px;display:flex;flex-direction:column}
+.funnel-header{padding:10px 12px;border-bottom:1px solid var(--border)}
+.fh-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.funnel-header h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stage-count{background:var(--card2);border-radius:20px;padding:2px 7px;font-size:10px;color:var(--text2)}
+.stage-total{font-size:10px;color:var(--text3)}
+.funnel-cards{padding:8px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px}
+.deal-card{background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:9px;cursor:pointer;transition:.15s;user-select:none}
+.deal-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.deal-card.stale{border-left:3px solid var(--red)!important}
+.deal-card.no-date{border-left:3px solid var(--orange)}
+.deal-card.no-amount{border-left:3px solid var(--purple)}
+.deal-name{font-size:11px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-amt{font-size:11px;font-weight:600}
+.deal-amt.has{color:var(--accent)}.deal-amt.none{color:var(--text3)}
+.deal-meta{display:flex;justify-content:space-between;margin-top:5px;align-items:center;flex-wrap:wrap;gap:3px}
+.deal-resp{font-size:10px;color:var(--text3)}
+.deal-tags{display:flex;gap:3px;flex-wrap:wrap}
+.tag{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500}
+.tag-corp{background:#1e3a5f;color:#60a5fa}.tag-ws{background:#2d1b69;color:#c4b5fd}.tag-stale{background:#450a0a;color:#f87171}
+.deal-next{font-size:9px;color:var(--yellow);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col-contactado .funnel-header h3{color:#60a5fa}.col-catalogo .funnel-header h3{color:#a78bfa}
+.col-cotizacion .funnel-header h3{color:var(--yellow)}.col-negociacion .funnel-header h3{color:var(--orange)}
+.col-ganado .funnel-header h3{color:var(--green)}.col-perdido .funnel-header h3{color:var(--red)}
+.drop-active{border-color:var(--accent)!important;background:rgba(59,130,246,.08)!important}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-toolbar{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,textarea{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+.btn-danger{background:var(--red);color:#fff}.btn-success{background:#16a34a;color:#fff}
+.btn-sm{padding:4px 10px;font-size:11px}
 table{width:100%;border-collapse:collapse}
-th{font-size:11px;font-weight:600;color:#888;text-align:left;padding:8px 10px;border-bottom:1px solid #eee}
-td{padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:13px;vertical-align:middle}
-.tr{text-align:right}.tc{text-align:center}
-.qinput{width:60px;text-align:center}
-.bdel{background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}
-.bdel:hover{background:#fee;color:#c00}
-.disc-row{display:flex;align-items:center;gap:8px;margin-top:16px}
-.disc-row label{font-size:12px;color:#888;font-weight:500;white-space:nowrap}
-.totals{display:flex;justify-content:flex-end;margin-top:12px}
-.ttable{width:260px;border-collapse:collapse}
-.ttable td{padding:5px 8px;font-size:13px}
-.tlbl{color:#888}
-.trow-final td{font-weight:600;font-size:14px;border-top:1px solid #ddd;padding-top:8px}
-.btn{border:1px solid #ddd;background:#fff;color:#1a1a1a;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
-.btn:hover{background:#f5f5f5}
-.btnp{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.btnp:hover{background:#333}
-.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
-.empty{text-align:center;padding:32px;color:#aaa;font-size:13px}
-.hrow{display:flex;align-items:center}
-.cotn{font-size:13px;color:#999;margin-left:auto}
-.smsg{font-size:12px;padding:8px 14px;border-radius:6px;margin-top:10px;display:none}
-.sok{background:#eaf3de;color:#3b6d11;display:block}
-.serr{background:#fee;color:#c00;display:block}
+th{text-align:left;padding:9px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
+.badge{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600}
+.badge-cot{background:#1e3a5f;color:#60a5fa}.badge-cat{background:#2d1b69;color:#a78bfa}
+.badge-gan{background:#14532d;color:#4ade80}.badge-per{background:#450a0a;color:#f87171}
+.badge-neg{background:#431407;color:#fb923c}.badge-con{background:#1e293b;color:#94a3b8}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;width:580px;max-height:92vh;overflow-y:auto;padding:24px}
+.modal h2{font-size:15px;font-weight:700;margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:11px;color:var(--text2);font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%}
+.form-group textarea{resize:vertical;min-height:52px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+.esection{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.hist-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px}
+.hist-item:last-child{border:none}
+.hist-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:3px;flex-shrink:0}
+.hist-date{color:var(--text3);min-width:70px}.hist-text{color:var(--text2)}
+.loss-reasons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.reason-btn{padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--card2);color:var(--text2);cursor:pointer;font-size:11px;text-align:center;transition:.15s}
+.reason-btn:hover,.reason-btn.sel{border-color:var(--red);color:var(--red);background:#450a0a33}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.alert-strip{background:#422006;border:1px solid #f97316;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#fb923c}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e2535;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.new-badge{background:#1e3a5f;color:#60a5fa;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;margin-left:4px}
 </style>
 </head>
 <body>
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <span style="color:var(--text2);font-size:13px">Conectando con Supabase...</span>
+</div>
 
-<header>
-  <img src="https://i.imgur.com/26BHPj5.png" style="height:40px;object-fit:contain">
-</header>
-
-<div class="app">
-  <div class="card">
-    <div class="hrow card-title">
-      <span>Datos del cliente</span>
-      <span class="cotn" id="cotLabel">Cotización N° —</span>
-    </div>
-    <div class="g3" style="margin-bottom:12px">
-      <div class="field"><label>Empresa</label><input id="empresa" placeholder="Nombre empresa"></div>
-      <div class="field"><label>RUT empresa</label><input id="rut" placeholder="76.xxx.xxx-x"></div>
-      <div class="field"><label>Contacto</label><input id="contacto" placeholder="Nombre contacto"></div>
-    </div>
-    <div class="g2">
-      <div class="field"><label>Fecha</label><input type="date" id="fecha"></div>
-      <div class="field"><label>N° Cotización</label><input type="number" id="cotNum" min="1" value="" oninput="updateLbl()"></div>
-    </div>
+<div id="sidebar">
+  <div class="logo">
+    <img src="https://www.atakamaoutdoor.cl/cdn/shop/files/ATAKAMA_OUTDOOR_EQUIPMENT_NEGRO.png" alt="Atakama" style="width:160px;filter:invert(1);display:block;margin-bottom:4px">
+    <span>CRM Ventas</span>
   </div>
+  <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+  <div class="nav-item" onclick="showPage('funnel')"><span class="nav-icon">🎯</span><span>Embudo</span></div>
+  <div class="nav-item" onclick="showPage('deals')"><span class="nav-icon">💼</span><span>Tratos</span></div>
+  <div class="nav-item" onclick="showPage('clients')"><span class="nav-icon">👥</span><span>Clientes</span></div>
+  <div class="nav-item" onclick="showPage('prospects')"><span class="nav-icon">📥</span><span>Prospectos <span id="pros-nav-badge" style="display:none" class="new-badge">0</span></span></div>
+  <div class="nav-sep"></div>
+  <div class="nav-item" onclick="showPage('new')"><span class="nav-icon">➕</span><span>Nuevo Trato</span></div>
+  <div class="nav-sync"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Conectando...</span></div>
+</div>
 
-  <div class="card">
-    <div class="card-title">Agregar productos</div>
-    <div class="search-wrap">
-      <input id="searchInput" type="text" placeholder="Buscar por SKU o nombre de producto..." autocomplete="off">
-      <div class="dd" id="dd">
-        <div class="dd-head"><span>SKU</span><span>Descripción</span><span style="text-align:right">Precio Neto</span></div>
-        <div id="ddBody"></div>
-      </div>
-    </div>
-    <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
-      <label style="font-size:12px;color:#888;font-weight:500">Carga masiva:</label>
-      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="loadMassive(this)">
-      <button class="btn" onclick="document.getElementById('fileInput').click()">📂 Cargar Excel</button>
-      <span style="font-size:11px;color:#aaa">Columnas requeridas: SKU, Cantidad, Precio Neto</span>
-    </div>
+<div id="main">
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">Resumen general · Atakama</div>
+  <div class="gs-wrap">
+    <span class="gs-icon">🔍</span>
+    <input type="text" id="global-search" placeholder="Buscar cliente, empresa o RUT..." oninput="globalSearch(this.value)" onblur="setTimeout(hideGlobalResults,200)">
+    <div class="search-results" id="search-results"></div>
   </div>
-
-  <div class="card">
-    <div class="card-title">Detalle cotización</div>
-    <div class="empty" id="emptyState">Agrega productos usando el buscador</div>
-    <table id="tbl" style="display:none">
-      <thead>
-        <tr>
-          <th style="width:140px">Código</th>
-          <th>Descripción</th>
-          <th class="tc" style="width:72px">Cant.</th>
-          <th class="tr" style="width:110px">Precio Neto</th>
-          <th class="tr" style="width:110px">Total Neto</th>
-          <th style="width:36px"></th>
-        </tr>
-      </thead>
-      <tbody id="tblBody"></tbody>
-    </table>
-    <div class="disc-row">
-      <label>Descuento global:</label>
-      <input type="number" id="discount" min="0" max="100" value="0" style="width:80px;text-align:center" oninput="recalc()">
-      <span style="font-size:13px;color:#888">%</span>
-    </div>
-    <div class="totals">
-      <table class="ttable">
-        <tr><td class="tlbl">Subtotal neto</td><td class="tr" id="tSub">$0</td></tr>
-        <tr><td class="tlbl" id="tDiscLbl">Descuento (0%)</td><td class="tr" id="tDisc" style="color:#c00">-$0</td></tr>
-        <tr><td class="tlbl">Valor neto</td><td class="tr" id="tNet">$0</td></tr>
-        <tr><td class="tlbl">IVA 19%</td><td class="tr" id="tIva">$0</td></tr>
-        <tr class="trow-final"><td>Total</td><td class="tr" id="tTotal">$0</td></tr>
-      </table>
-    </div>
-    <div class="actions">
-      <button class="btn" onclick="clearAll()">Nueva cotización</button>
-      <button class="btn" onclick="exportExcel()">Descargar Excel</button>
-      <button class="btn" onclick="saveSheets()">Guardar en Sheets</button>
-      <button class="btn btnp" onclick="makePDF()">Descargar PDF</button>
-    </div>
-    <div id="smsg" class="smsg"></div>
+  <div class="filter-bar">
+    <select id="db-canal" onchange="renderDashboard()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
+    <select id="db-resp" onchange="renderDashboard()"><option value="all">Todos los vendedores</option><option>Balta</option><option>Ignacio</option><option>Tomás</option></select>
+    <select id="db-cat" onchange="renderDashboard()"><option value="all">Todas las categorías</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option></select>
+  </div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="canal-split" id="canal-split"></div>
+  <div class="charts-row cr3">
+    <div class="chart-card"><div class="chart-title">Distribución por Estado</div><canvas id="chartEstado" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Tratos por Vendedor</div><canvas id="chartVendedor" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Canal de Fuente</div><canvas id="chartFuente" height="180"></canvas></div>
+  </div>
+  <div class="charts-row cr2">
+    <div class="chart-card"><div class="chart-title">Tratos por Categoría</div><canvas id="chartCategoria" height="130"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Razones de Pérdida</div><canvas id="chartPerdida" height="130"></canvas></div>
   </div>
 </div>
 
+<!-- EMBUDO -->
+<div id="page-funnel" class="page">
+  <div class="page-title">Embudo de Ventas</div>
+  <div class="page-sub"><span style="color:var(--red)">■</span> Sin actividad +3d &nbsp;<span style="color:var(--orange)">■</span> Sin fecha &nbsp;<span style="color:var(--purple)">■</span> Sin monto</div>
+  <div class="filter-bar">
+    <select id="fn-canal" onchange="renderFunnel()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
+    <select id="fn-resp" onchange="renderFunnel()"><option value="all">Todos los vendedores</option><option>Balta</option><option>Ignacio</option><option>Tomás</option></select>
+  </div>
+  <div id="funnel-alerts"></div>
+  <div class="funnel-wrap" id="funnel-wrap"></div>
+</div>
+
+<!-- TRATOS -->
+<div id="page-deals" class="page">
+  <div class="page-title">Tratos</div>
+  <div class="page-sub">Todos los tratos del sistema</div>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="deals-search" placeholder="🔍 Buscar..." style="width:160px" oninput="renderDealsTable()">
+      <select id="deals-estado" onchange="renderDealsTable()"><option value="all">Todos los estados</option><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option><option>Trato ganado</option><option>Trato perdido</option></select>
+      <select id="deals-resp" onchange="renderDealsTable()"><option value="all">Todos</option><option>Balta</option><option>Ignacio</option><option>Tomás</option></select>
+      <select id="deals-canal" onchange="renderDealsTable()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
+      <select id="deals-monto" onchange="renderDealsTable()"><option value="all">Todos los montos</option><option value="zero">Sin monto</option><option value="nonzero">Con monto</option></select>
+      <button class="btn btn-secondary btn-sm" onclick="exportExcel()">📥 Excel</button>
+      <button class="btn btn-primary" onclick="showPage('new')">+ Nuevo Trato</button>
+    </div>
+    <table><thead><tr><th>#</th><th>Cliente</th><th>Empresa</th><th>RUT</th><th>Celular</th><th>Email</th><th>Canal</th><th>Resp.</th><th>Monto</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="deals-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- CLIENTES -->
+<div id="page-clients" class="page">
+  <div class="page-title">Clientes</div>
+  <div class="page-sub">Base de clientes registrados</div>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="cli-search" placeholder="🔍 Buscar..." style="width:190px" oninput="renderClientsTable()">
+      <select id="cli-canal" onchange="renderClientsTable()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
+    </div>
+    <table><thead><tr><th>Cliente</th><th>Empresa</th><th>RUT</th><th>Celular</th><th>Email</th><th>Canal</th><th>Categoría</th><th>Resp.</th><th>Tratos</th><th>Valor Total</th></tr></thead>
+    <tbody id="cli-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- PROSPECTOS -->
+<div id="page-prospects" class="page">
+  <div class="page-title">Prospectos Web</div>
+  <div class="page-sub">Formularios recibidos desde atakamaoutdoor.cl</div>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="pros-search" placeholder="🔍 Buscar..." style="width:190px" oninput="renderProspects()">
+      <select id="pros-filter" onchange="renderProspects()"><option value="all">Todos</option><option value="new">Solo nuevos</option><option value="reviewed">Revisados</option></select>
+      <span id="pros-count" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+    <table><thead><tr><th>Fecha</th><th>Nombre</th><th>Empresa</th><th>RUT</th><th>Email</th><th>Celular</th><th>Mensaje</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody id="pros-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- NUEVO TRATO -->
+<div id="page-new" class="page">
+  <div class="page-title">Nuevo Trato</div>
+  <div class="page-sub">Ingresa los datos del trato</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px;max-width:640px">
+    <div class="form-grid">
+      <div class="form-group full" style="position:relative">
+        <label>Nombre del Cliente *</label>
+        <input type="text" id="nf-cliente" autocomplete="off" oninput="clienteSuggest(this.value)" onblur="setTimeout(hideClienteSuggest,200)">
+        <div id="cliente-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:6px;z-index:50;max-height:200px;overflow-y:auto"></div>
+      </div>
+      <div class="form-group full"><label>Empresa</label><input type="text" id="nf-empresa"></div>
+      <div class="form-group"><label>RUT</label><input type="text" id="nf-rut" placeholder="76.xxx.xxx-x"></div>
+      <div class="form-group"><label>Celular</label><input type="text" id="nf-celular" placeholder="+56 9 xxxx xxxx"></div>
+      <div class="form-group full"><label>Email</label><input type="text" id="nf-email" placeholder="contacto@empresa.cl"></div>
+      <div class="form-group"><label>Canal</label><select id="nf-canal"><option>Corporativo</option><option>WS</option></select></div>
+      <div class="form-group"><label>Categoría</label><select id="nf-cat"><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
+      <div class="form-group"><label>Responsable</label><select id="nf-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
+      <div class="form-group"><label>Monto ($)</label><input type="number" id="nf-monto" placeholder="0"></div>
+      <div class="form-group"><label>Estado inicial</label><select id="nf-estado"><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option></select></div>
+      <div class="form-group"><label>Canal de Fuente</label><select id="nf-fuente"><option value="">Sin especificar</option><option>Cliente Antiguo</option><option>Prospecto</option><option>Correo Atakama</option><option>Referido</option><option>Formulario Web</option></select></div>
+      <div class="form-group"><label>Fecha Creado</label><input type="date" id="nf-fecha"></div>
+      <div class="form-group"><label>Fecha Próxima Acción</label><input type="date" id="nf-nextdate"></div>
+      <div class="form-group full"><label>Próxima Acción</label><input type="text" id="nf-next"></div>
+      <div class="form-group full"><label>Comentario</label><textarea id="nf-comentario"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" onclick="saveDeal()">💾 Guardar Trato</button>
+      <button class="btn btn-secondary" onclick="showPage('deals')">Cancelar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-bg" id="modal-edit">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin-bottom:0">✏️ <span id="edit-title"></span></h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit')">Cancelar</button>
+        <button class="btn btn-danger btn-sm" id="ef-del-btn">🗑 Eliminar</button>
+        <button class="btn btn-success btn-sm" onclick="saveEdit()">💾 Guardar</button>
+      </div>
+    </div>
+    <div class="esection">Información del cliente</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre del Cliente</label><input type="text" id="ef-cliente"></div>
+      <div class="form-group full"><label>Empresa</label><input type="text" id="ef-empresa"></div>
+      <div class="form-group"><label>RUT</label><input type="text" id="ef-rut"></div>
+      <div class="form-group"><label>Celular</label><input type="text" id="ef-celular"></div>
+      <div class="form-group full"><label>Email</label><input type="text" id="ef-email"></div>
+      <div class="form-group"><label>Canal</label><select id="ef-canal"><option>Corporativo</option><option>WS</option></select></div>
+      <div class="form-group"><label>Categoría</label><select id="ef-cat"><option value="">Sin categoría</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
+      <div class="form-group"><label>Responsable</label><select id="ef-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
+      <div class="form-group"><label>Canal de Fuente</label><select id="ef-fuente"><option value="">Sin especificar</option><option>Cliente Antiguo</option><option>Prospecto</option><option>Correo Atakama</option><option>Referido</option><option>Formulario Web</option></select></div>
+    </div>
+    <div class="esection">Estado y valores</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Estado</label><select id="ef-estado"><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option><option>Trato ganado</option><option>Trato perdido</option></select></div>
+      <div class="form-group"><label>Monto ($)</label><input type="number" id="ef-monto"></div>
+      <div class="form-group"><label>Fecha Creado</label><input type="date" id="ef-fechaCreado"></div>
+      <div class="form-group"><label>Fecha Ganado</label><input type="date" id="ef-fechaGanado"></div>
+      <div class="form-group"><label>Razón Pérdida</label><select id="ef-razon"><option value="">-</option><option>Proveedor alternativo</option><option>Desiste de la compra</option><option>Solo cotiza</option><option>Falta de stock</option><option>Precio muy alto</option><option>Sin respuesta</option></select></div>
+    </div>
+    <div class="esection">Seguimiento</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Próxima Acción</label><input type="text" id="ef-next"></div>
+      <div class="form-group"><label>Fecha Próxima Acción</label><input type="date" id="ef-nextdate"></div>
+      <div class="form-group full"><label>Comentario</label><textarea id="ef-comentario"></textarea></div>
+    </div>
+    <div class="esection">Historial de actividad</div>
+    <div id="ef-history"></div>
+  </div>
+</div>
+
+<!-- MODAL CONVERTIR PROSPECTO -->
+<div class="modal-bg" id="modal-prospect">
+  <div class="modal" style="width:520px">
+    <h2>🎯 Convertir a Trato</h2>
+    <p style="color:var(--text3);font-size:12px;margin-bottom:14px">Revisa y completa los datos antes de crear el trato</p>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre del Cliente</label><input type="text" id="pf-cliente"></div>
+      <div class="form-group full"><label>Empresa</label><input type="text" id="pf-empresa"></div>
+      <div class="form-group"><label>RUT</label><input type="text" id="pf-rut"></div>
+      <div class="form-group"><label>Celular</label><input type="text" id="pf-celular"></div>
+      <div class="form-group full"><label>Email</label><input type="text" id="pf-email"></div>
+      <div class="form-group"><label>Canal</label><select id="pf-canal"><option>Corporativo</option><option>WS</option></select></div>
+      <div class="form-group"><label>Categoría</label><select id="pf-cat"><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
+      <div class="form-group"><label>Responsable</label><select id="pf-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
+      <div class="form-group"><label>Monto estimado ($)</label><input type="number" id="pf-monto" placeholder="0"></div>
+      <div class="form-group full"><label>Comentario</label><textarea id="pf-comentario"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-prospect')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="convertProspect()">✅ Crear Trato</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PÉRDIDA -->
+<div class="modal-bg" id="modal-loss">
+  <div class="modal" style="width:420px">
+    <h2>¿Por qué se perdió el trato?</h2>
+    <div class="loss-reasons">
+      <div class="reason-btn" onclick="selReason(this,'Proveedor alternativo')">🏪 Proveedor alternativo</div>
+      <div class="reason-btn" onclick="selReason(this,'Desiste de la compra')">❌ Desiste de la compra</div>
+      <div class="reason-btn" onclick="selReason(this,'Solo cotiza')">📋 Solo cotiza</div>
+      <div class="reason-btn" onclick="selReason(this,'Falta de stock')">📦 Falta de stock</div>
+      <div class="reason-btn" onclick="selReason(this,'Precio muy alto')">💸 Precio muy alto</div>
+      <div class="reason-btn" onclick="selReason(this,'Sin respuesta')">👻 Sin respuesta</div>
+    </div>
+    <div class="form-group"><label>Comentario adicional</label><textarea id="loss-comment"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-loss')">Cancelar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmLoss()">Marcar como Perdido</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const SHEETS_URL='https://script.google.com/macros/s/AKfycbwooW0heR5tHuksUMK4fJgBnds4lDUO5f5Cki-ZWQ2FRUg_Wb5fuoxtDfVdde_CCelk/exec';
+var SB_URL='https://popzkkhsdkjuwlbveekg.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvcHpra2hzZGtqdXdsYnZlZWtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDc5NzIsImV4cCI6MjA4OTg4Mzk3Mn0.dhmo2Kzbcer8BpBKuc0nborN6Jmm1OgIHlYe05jGf6o';
+var STALE=3;
+var PIE=['#3b82f6','#8b5cf6','#f59e0b','#f97316','#22c55e','#ef4444','#06b6d4','#ec4899','#84cc16'];
+var deals=[],histMap={},prospects=[],selReason_val='',pendingLossId=null,editingId=null,convertingId=null,charts={},dragId=null,dragActive=false;
 
-const P=[
-{s:"BANLOALM_GR",n:"BANDANA LANA MERINO LOA GRIS",p:12600},
-{s:"BANLOALM_VR",n:"BANDANA LANA MERINO LOA VERDE",p:12600},
-{s:"BANPALPAL_CEL",n:"BANDANA COOLMAX PALENA CELESTE",p:5037},
-{s:"BANPALPTC_NG",n:"BANDANA COOLMAX PALENA NEGRO",p:5037},
-{s:"BUSAAD_GR",n:"BUCKET ADULTO SALADO GRIS",p:6550},
-{s:"BUSAAD_VR",n:"BUCKET ADULTO SALADO VERDE",p:6550},
-{s:"BUSANI_AP",n:"BUCKET NIÑO SALADO AZUL",p:5037},
-{s:"BUSANI_VP",n:"BUCKET NIÑO SALADO VERDE",p:5037},
-{s:"JDJUNC_VER",n:"JOCKEY DEPORTIVO JUNCAL VERDE",p:10079},
-{s:"JFPDEN_GR",n:"JOCKEY DEPORTIVO ENCO NEGRO",p:11087},
-{s:"JFPDEN_VR",n:"JOCKEY FIVE PANEL ENCO VERDE",p:11087},
-{s:"JFPPUE_AZ",n:"JOCKEY FIVE PANEL PUELO AZUL",p:10079},
-{s:"JFPPUE_CAF",n:"JOCKEY FIVE PANEL PUELO CAFÉ/VERDE",p:10079},
-{s:"JFPREVAZ",n:"JOCKEY REVERSIBLE ESPOLÓN AZUL",p:11087},
-{s:"JTRUCAU_CC",n:"JOCKEY TRUCKER CAUTÍN CAFÉ",p:9575},
-{s:"JTRUCAU_NG",n:"JOCKEY TRUCKER CAUTÍN NEGRO",p:9575},
-{s:"SOMLIRGRI_SM",n:"SOMBRERO LIRCAY GRIS S/M",p:13104},
-{s:"SOMLIRVR_SM",n:"SOMBRERO LIRCAY VERDE S/M",p:13104},
-{s:"CINTRALM_BE",n:"CINTILLO LANA MERINO TRANCURA BEIGE",p:11087},
-{s:"GBEACHO_CG",n:"GORRO BEANIE CHOAPA GRIS",p:7558},
-{s:"GBEACHO_NG",n:"GORRO BEANIE CHOAPA NEGRO",p:7558},
-{s:"GBEACHO_VR",n:"GORRO BEANIE CHOAPA VERDE",p:7558},
-{s:"GBEALIM_AM",n:"GORRO BEANIE LIMARÍ AMBAR",p:7558},
-{s:"GBEALIM_GR",n:"GORRO BEANIE LIMARÍ GRIS",p:7558},
-{s:"GBEATRALM_BE",n:"GORRO BEANIE LANA MERINO TRANCURA BEIGE",p:11087},
-{s:"CCOOLAZ_SM",n:"CALCETÍN DEPORTIVO COOLMAX CORCOVADO GRIS S/M",p:6550},
-{s:"CCOOLAZ_LXL",n:"CALCETÍN DEPORTIVO COOLMAX CORCOVADO GRIS L/XL",p:6550},
-{s:"GPCLMNGR_SM",n:"GUANTE PRIMERA CAPA LANA MERINO SERRANO NEGRO S/M",p:12600},
-{s:"GPCNGR_SM",n:"GUANTE PRIMERA CAPA QUECO NEGRO S/M",p:10583},
-{s:"PCTERHNG_S",n:"PRIMERA CAPA ULTRALIGERA HOMBRE TERMICA GRIS S",p:11087},
-{s:"PCTERHNG_M",n:"PRIMERA CAPA ULTRALIGERA HOMBRE TERMICA GRIS M",p:11087},
-{s:"PCTERHNG_L",n:"PRIMERA CAPA ULTRALIGERA HOMBRE TERMICA GRIS L",p:11087},
-{s:"PCTERHNG_XL",n:"PRIMERA CAPA ULTRALIGERA HOMBRE TERMICA GRIS XL",p:11087},
-{s:"PCULHNG_S",n:"PRIMERA CAPA TÉRMICA HOMBRE VENTOFIT NEGRO S",p:18650},
-{s:"PCULHNG_XL",n:"PRIMERA CAPA TÉRMICA HOMBRE VENTOFIT NEGRO XL",p:18650},
-{s:"PMCCPBL_S",n:"POLERA MC HOMBRE CUERNOS DEL PAINE BLANCO S",p:10079},
-{s:"PMCCPBL_M",n:"POLERA MC HOMBRE CUERNOS DEL PAINE BLANCO M",p:10079},
-{s:"PMCCPBL_L",n:"POLERA MC HOMBRE CUERNOS DEL PAINE BLANCO L",p:10079},
-{s:"PMCCPBL_XL",n:"POLERA MC HOMBRE CUERNOS DEL PAINE BLANCO XL",p:10079},
-{s:"PMCEQBR_S",n:"POLERA MC HOMBRE EQUIPAMIENTO BURDEO S",p:9575},
-{s:"PMCEQBR_M",n:"POLERA MC HOMBRE EQUIPAMIENTO BURDEO M",p:9575},
-{s:"PMCEQBR_L",n:"POLERA MC HOMBRE EQUIPAMIENTO BURDEO L",p:9575},
-{s:"PMCEQBR_XL",n:"POLERA MC HOMBRE EQUIPAMIENTO BURDEO XL",p:9575},
-{s:"PMCMOBL_S",n:"POLERA MC HOMBRE MOCHILERA BLANCO S",p:9575},
-{s:"PMCMOBL_M",n:"POLERA MC HOMBRE MOCHILERA BLANCO M",p:9575},
-{s:"PMCMOBL_XL",n:"POLERA MC HOMBRE MOCHILERA BLANCO XL",p:9575},
-{s:"PODEHDIAZ_S",n:"POLERA DRY CORE HOMBRE DINÁMICA AZUL S",p:11087},
-{s:"PODEHDIAZ_M",n:"POLERA DRY CORE HOMBRE DINÁMICA AZUL M",p:11087},
-{s:"PODEHDIAZ_L",n:"POLERA DRY CORE HOMBRE DINÁMICA AZUL L",p:11087},
-{s:"PODEHDIAZ_XL",n:"POLERA DRY CORE HOMBRE DINÁMICA AZUL XL",p:11087},
-{s:"PODEHDIGC_S",n:"POLERA DRY CORE HOMBRE DINÁMICA GRIS S",p:11087},
-{s:"PODEHDIGC_M",n:"POLERA DRY CORE HOMBRE DINÁMICA GRIS M",p:11087},
-{s:"PODEHDIGC_L",n:"POLERA DRY CORE HOMBRE DINÁMICA GRIS L",p:11087},
-{s:"CAMCHHOVR_S",n:"CAMISA MC HOMBRE HORIZONTE VERDE S",p:20163},
-{s:"CAMCHHOVR_M",n:"CAMISA MC HOMBRE HORIZONTE VERDE M",p:20163},
-{s:"CAMCHHOVR_L",n:"CAMISA MC HOMBRE HORIZONTE VERDE L",p:20163},
-{s:"CAMCHHOAZ_S",n:"CAMISA MC HOMBRE HORIZONTE AZUL S",p:20163},
-{s:"CAMCHHOAZ_M",n:"CAMISA MC HOMBRE HORIZONTE AZUL M",p:20163},
-{s:"CAMCHHOAZ_L",n:"CAMISA MC HOMBRE HORIZONTE AZUL L",p:20163},
-{s:"PODEMDICE_XS",n:"POLERA DRY CORE MUJER DINÁMICA CELESTE XS",p:11087},
-{s:"PODEMDICE_S",n:"POLERA DRY CORE MUJER DINÁMICA CELESTE S",p:11087},
-{s:"PODEMDICE_M",n:"POLERA DRY CORE MUJER DINÁMICA CELESTE M",p:11087},
-{s:"PODEMDIGR_XS",n:"POLERA DRY CORE MUJER DINÁMICA GRIS XS",p:11087},
-{s:"PODEMDIGR_S",n:"POLERA DRY CORE MUJER DINÁMICA GRIS S",p:11087},
-{s:"PEDPAZ_XS",n:"PETO DEPORTIVO MUJER AURA FITFLEX AZUL XS",p:11592},
-{s:"PEDPAZ_S",n:"PETO DEPORTIVO MUJER AURA FITFLEX AZUL S",p:11592},
-{s:"PEDPNG_XS",n:"PETO DEPORTIVO MUJER AURA FITFLEX NEGRO XS",p:11592},
-{s:"PEDPNG_S",n:"PETO DEPORTIVO MUJER AURA FITFLEX NEGRO S",p:11592},
-{s:"PCOVENHNG_S",n:"POLAR CORTAVIENTO VENT-OFF HOMBRE PATAGÓN NEGRO S",p:32768},
-{s:"PCOVENHNG_M",n:"POLAR CORTAVIENTO VENT-OFF HOMBRE PATAGÓN NEGRO M",p:32768},
-{s:"PTEXHCAFZ_S",n:"POLAR TEXTURADO FULL ZIP HOMBRE VENTISQUERO CAFÉ S",p:22684},
-{s:"PTEXHCAFZ_M",n:"POLAR TEXTURADO FULL ZIP HOMBRE VENTISQUERO CAFÉ M",p:22684},
-{s:"PTEXHCAFZ_L",n:"POLAR TEXTURADO FULL ZIP HOMBRE VENTISQUERO CAFÉ L",p:22684},
-{s:"PTEXHGRFZ_S",n:"POLAR TEXTURADO FULL ZIP HOMBRE VENTISQUERO GRIS S",p:22684},
-{s:"PTEXHGRFZ_M",n:"POLAR TEXTURADO FULL ZIP HOMBRE VENTISQUERO GRIS M",p:22684},
-{s:"PTEXHGR_S",n:"POLAR TEXTURADO HOMBRE VENTISQUERO GRIS S",p:20163},
-{s:"PTEXHVR_S",n:"POLAR TEXTURADO HOMBRE VENTISQUERO VERDE S",p:20163},
-{s:"PTEXMBEFZ_XS",n:"POLAR TEXTURADO FULL ZIP MUJER VENTISQUERO BEIGE XS",p:22684},
-{s:"PTEXMBEFZ_S",n:"POLAR TEXTURADO FULL ZIP MUJER VENTISQUERO BEIGE S",p:22684},
-{s:"PTEXMBEFZ_M",n:"POLAR TEXTURADO FULL ZIP MUJER VENTISQUERO BEIGE M",p:22684},
-{s:"PTEXMGRFZ_XS",n:"POLAR TEXTURADO FULL ZIP MUJER VENTISQUERO GRIS XS",p:22684},
-{s:"PTEXMGR_XS",n:"POLAR TEXTURADO MUJER VENTISQUERO GRIS XS",p:20163},
-{s:"PTEXMRO_XS",n:"POLAR TEXTURADO MUJER VENTISQUERO BURDEO XS",p:20163},
-{s:"CHIMHFRNG_S",n:"IMPERMEABLE HOMBRE FRONTERA NEGRO S",p:40331},
-{s:"CHIMHFRNG_M",n:"IMPERMEABLE HOMBRE FRONTERA NEGRO M",p:40331},
-{s:"CHIMHFRNG_L",n:"IMPERMEABLE HOMBRE FRONTERA NEGRO L",p:40331},
-{s:"CHIMHFRNG_XL",n:"IMPERMEABLE HOMBRE FRONTERA NEGRO XL",p:40331},
-{s:"PATEHAM_L",n:"PARKA TERMICA HOMBRE INDÓMITA AMARILLO L",p:45373},
-{s:"PATEHNONG_S",n:"PARKA TERMICA HOMBRE NÓMADA NEGRO S",p:40331},
-{s:"PATEHNONG_M",n:"PARKA TERMICA HOMBRE NÓMADA NEGRO M",p:40331},
-{s:"CHIMMFRNG_XS",n:"IMPERMEABLE MUJER FRONTERA NEGRO XS",p:40331},
-{s:"CHIMMFRNG_S",n:"IMPERMEABLE MUJER FRONTERA NEGRO S",p:40331},
-{s:"CHIMMFRNG_M",n:"IMPERMEABLE MUJER FRONTERA NEGRO M",p:40331},
-{s:"PATEMNONG_S",n:"PARKA TERMICA MUJER NÓMADA NEGRO S",p:40331},
-{s:"PATEMNONG_M",n:"PARKA TERMICA MUJER NÓMADA NEGRO M",p:40331},
-{s:"PADEHTRGR_30",n:"PANTALON DESMONTABLE HOMBRE TRAVESÍA GRIS 30",p:28734},
-{s:"PADEHTRGR_32",n:"PANTALON DESMONTABLE HOMBRE TRAVESÍA GRIS 32",p:28734},
-{s:"PADEHTRGR_34",n:"PANTALON DESMONTABLE HOMBRE TRAVESÍA GRIS 34",p:28734},
-{s:"PADEMTRGR_34",n:"PANTALON DESMONTABLE MUJER TRAVESÍA GRIS 34",p:28734},
-{s:"PADEMTRGR_36",n:"PANTALON DESMONTABLE MUJER TRAVESÍA GRIS 36",p:28734},
-{s:"SDHTFNG_S",n:"SHORT DEPORTIVO HOMBRE TRAILFIT NEGRO S",p:15121},
-{s:"SDHTFNG_M",n:"SHORT DEPORTIVO HOMBRE TRAILFIT NEGRO M",p:14617},
-{s:"SDHTFNG_L",n:"SHORT DEPORTIVO HOMBRE TRAILFIT NEGRO L",p:14617},
-{s:"CABING_XS",n:"CALZA BIKER MUJER HALO FLIXFLEX NEGRO XS",p:11592},
-{s:"CABIAZ_XS",n:"CALZA BIKER MUJER HALO FLIXFLEX AZUL XS",p:11592},
-{s:"CADEMVR_XS",n:"CALZA DEPORTIVA MUJER PANORAMICA VERDE XS",p:15121},
-{s:"VTNGCN_530",n:"VASO TÉRMICO 530ML NEGRO CARPINTERO",p:9575},
-{s:"VTAZQU_530",n:"VASO TÉRMICO 530ML AZUL QUILLAY",p:9575},
-{s:"VTAZTOLA_350",n:"VASO TÉRMICO 350ML AZUL TORTUGA LAÚD",p:8062},
-{s:"VTNGAR_350",n:"VASO TÉRMICO 350ML NEGRO ARAUCARIA",p:8062},
-{s:"BTBLATK_690",n:"BOTELLA TÉRMICA 690ML BLANCO ATAKAMA",p:8566},
-{s:"BTNGATK_690",n:"BOTELLA TÉRMICA 690ML NEGRO ATAKAMA",p:8566},
-{s:"BTNGAM_690",n:"BOTELLA TÉRMICA 690ML NEGRO AMANITA MUSCARIA",p:10079},
-{s:"BTAZBJ_690",n:"BOTELLA TÉRMICA 690ML AZUL BALLENA JOROBADA",p:10079},
-{s:"BTAZMP_960",n:"BOTELLA TÉRMICA 960ML AZUL MARTÍN PESCADOR",p:14113},
-{s:"BTNGPU_960",n:"BOTELLA TÉRMICA 960ML NEGRO PUMA",p:14113},
-{s:"PETNG_150",n:"PETACA 150ML NEGRO PUMA",p:8566},
-{s:"SETCAFNG_350",n:"SET CAFETERA + 2 VASOS NEGRO CÓNDOR ANDINO",p:30247},
-{s:"TENGAR_1.3L",n:"TERMO 1.3LT NEGRO ARAUCARIA",p:18650},
-{s:"SVANGFA_480",n:"SET 4 VASOS ACERO 480ML FAUNA CHILENA",p:17642},
-{s:"SVNGAV_480",n:"SET 4 VASOS ACERO 480ML AVES CHILENAS",p:17642},
-{s:"SETST_AVES",n:"SET DE STICKERS AVES",p:1513},
-{s:"SETST_FAUNA",n:"SET DE STICKERS FAUNA",p:1513},
-{s:"SETST_FF",n:"SET DE STICKERS FLORA Y FUNGI",p:1513},
-{s:"PFUTAZMN_3637",n:"PANTUFLA FUTALEUFÚ FLEX AZUL MARINO 36-37",p:13608},
-{s:"PFUTAZMN_3839",n:"PANTUFLA FUTALEUFÚ FLEX AZUL MARINO 38-39",p:13608},
-{s:"PFUTAZMN_4041",n:"PANTUFLA FUTALEUFÚ FLEX AZUL MARINO 40-41",p:13608},
-{s:"PFUTBEFPN_3637",n:"PANTUFLA FUTALEUFÚ FLEX BEIGE FLORES 36-37",p:13608},
-{s:"PFUTBEFPN_3839",n:"PANTUFLA FUTALEUFÚ FLEX BEIGE FLORES 38-39",p:13608},
-{s:"PFUTBURN_3637",n:"PANTUFLA FUTALEUFÚ FLEX BURDEO 36-37",p:13608},
-{s:"PFUTCAFN_3637",n:"PANTUFLA FUTALEUFÚ FLEX CAFÉ 36-37",p:13608},
-{s:"PFUTCAFN_3839",n:"PANTUFLA FUTALEUFÚ FLEX CAFÉ 38-39",p:13608},
-{s:"PFUTCELN_3637",n:"PANTUFLA FUTALEUFÚ FLEX AZUL PETRÓLEO 36-37",p:13608},
-{s:"PFUTNGRCN_3637",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/CAFÉ 36-37",p:13608},
-{s:"PFUTNGRCN_3839",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/CAFÉ 38-39",p:13608},
-{s:"PFUTNGRCN_4041",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/CAFÉ 40-41",p:13608},
-{s:"PFUTNGRCN_4243",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/CAFÉ 42-43",p:13608},
-{s:"PFUTNGRN_3637",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/GRIS 36-37",p:13608},
-{s:"PFUTNGRN_3839",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/GRIS 38-39",p:13608},
-{s:"PFUTNGRN_4041",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/GRIS 40-41",p:13608},
-{s:"PFUTNGRN_4243",n:"PANTUFLA FUTALEUFÚ FLEX NEGRO/GRIS 42-43",p:13608},
-{s:"PFUTVRMN_3637",n:"PANTUFLA FUTALEUFÚ FLEX VERDE MUSGO 36-37",p:13608},
-{s:"PFUTVRMN_3839",n:"PANTUFLA FUTALEUFÚ FLEX VERDE MUSGO 38-39",p:13608},
-{s:"PNAVAZMN_3637",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX AZUL MARINO 36-37",p:17642},
-{s:"PNAVAZMN_3839",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX AZUL MARINO 38-39",p:17642},
-{s:"PNAVBEFPN_3637",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX BEIGE FLORES 36-37",p:17642},
-{s:"PNAVBURN_3637",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX BURDEO 36-37",p:17642},
-{s:"PNAVCAFN_3637",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX CAFÉ 36-37",p:17642},
-{s:"PNAVNGRN_3637",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX NEGRO/GRIS 36-37",p:17642},
-{s:"PNAVNGRN_3839",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX NEGRO/GRIS 38-39",p:17642},
-{s:"PNAVNGRN_4041",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX NEGRO/GRIS 40-41",p:17642},
-{s:"PNAVVRMN_3637",n:"PANTUFLA CAÑA ALTA NAVARINO FLEX VERDE MUSGO 36-37",p:17642},
-{s:"PTORNGR_3637",n:"PANTUFLA SIN TALÓN TORTEL FLEX NEGRO 36-37",p:11087},
-{s:"PTORNGR_3839",n:"PANTUFLA SIN TALÓN TORTEL FLEX NEGRO 38-39",p:11087},
-{s:"PTORNGR_4041",n:"PANTUFLA SIN TALÓN TORTEL FLEX NEGRO 40-41",p:11087},
-{s:"PTORNGR_4243",n:"PANTUFLA SIN TALÓN TORTEL FLEX NEGRO 42-43",p:11087},
-{s:"PCOCNGRN_3637",n:"PANTUFLA COCHRANE FLEX NEGRO 36-37",p:13608},
-{s:"PCOCNGRN_3839",n:"PANTUFLA COCHRANE FLEX NEGRO 38-39",p:13608},
-{s:"PCOCNGRN_4041",n:"PANTUFLA COCHRANE FLEX NEGRO 40-41",p:13608},
-{s:"PAYSNGR_3637",n:"PANTUFLA AYSÉN NEGRO 36-37",p:16634},
-{s:"PAYSNGR_3839",n:"PANTUFLA AYSÉN NEGRO 38-39",p:16634},
-{s:"PAYSNGR_4041",n:"PANTUFLA AYSÉN NEGRO 40-41",p:16634},
-{s:"PAYSVR_3839",n:"PANTUFLA AYSÉN VERDE 38-39",p:16634},
-{s:"PAYSVR_4041",n:"PANTUFLA AYSÉN VERDE 40-41",p:16634},
-{s:"PNAVAMMS3637",n:"PANTUFLA NAVARINO AMARILLO MOSTAZA 36-37",p:17642},
-{s:"PNAVBEGAP3637",n:"PANTUFLA NAVARINO BEIGE ANIMAL PRINT 36-37",p:17642},
-{s:"PNAVNGR4041",n:"PANTUFLA NAVARINO NEGRO 40-41",p:17642},
-{s:"SCHCAF_40",n:"SANDALIA OUTDOOR CHUNGARÁ CAFÉ 40",p:18650},
-{s:"SCHCAF_41",n:"SANDALIA OUTDOOR CHUNGARÁ CAFÉ 41",p:18650},
-{s:"SCHCAF_42",n:"SANDALIA OUTDOOR CHUNGARÁ CAFÉ 42",p:18650},
-{s:"SCHNG_43",n:"SANDALIA OUTDOOR CHUNGARÁ NEGRO 43",p:18650},
-{s:"SCHVR_41",n:"SANDALIA OUTDOOR CHUNGARÁ VERDE 41",p:18650},
-{s:"BAPROAZ",n:"BANANO PLEGABLE PROVINCIA AZUL 2LT",p:7558},
-{s:"BAPROGG",n:"BANANO PLEGABLE PROVINCIA GRIS 2LT",p:7558},
-{s:"MPOCHAZ_16LT",n:"MOCHILA PLEGABLE POCHOCO CELESTE 16LT",p:10583},
-{s:"MPOCHGG_16LT",n:"MOCHILA PLEGABLE POCHOCO NEGRO 16LT",p:10583},
-{s:"MCOCHNGR_25LT",n:"MOCHILA COCHAMO NEGRO 25LT",p:32768},
-{s:"MPSMANQNG_28LT",n:"MOCHILA PLEGABLE SECA MANQUEHUE NEGRO 28LT",p:25205},
-{s:"MVSNNG_40LT",n:"MOCHILA DE VIAJE SIERRA NEVADA NEGRO 40LT",p:35289},
-{s:"BRT7NG_55LT",n:"BOLSO DUFFLE RUTA 7 NEGRO 55LT",p:30247},
-{s:"BRT7NG_80LT",n:"BOLSO DUFFLE RUTA 7 NEGRO 80LT",p:35289},
-{s:"MPBBLEOCEL",n:"MOCHILA PORTABEBÉ LEONERA CELESTE",p:110919},
-{s:"CMMEAM_SM",n:"CUBRE MOCHILAS MELIMOYU NARANJA S/M",p:5037},
-{s:"CMMEAM_ML",n:"CUBRE MOCHILAS MELIMOYU NARANJA M/L",p:5541},
-{s:"SPCLASGRBG",n:"SILLA PLEGABLE CAMPING LASCAR GRIS/BEIGE",p:18650},
-{s:"SPCLASGRNJ",n:"SILLA PLEGABLE CAMPING LASCAR GRIS/NARANJO",p:18650},
-{s:"SCLLAGRAZ_XL",n:"SILLA DE CAMPING LLAIMA GRIS/AZUL XL",p:21676},
-{s:"SCLLAGRNJ_XL",n:"SILLA DE CAMPING LLAIMA GRIS/NARANJO XL",p:21676},
-{s:"SCNICH_GRAMA",n:"SILLA CAMPING NIÑOS CHAITÉN GRIS/AMARILLO",p:11087},
-{s:"HDSA_CEL",n:"HAMACA DOBLE SAUCE CELESTE 2P",p:18146},
-{s:"HSCOI_AMA",n:"HAMACA SINGLE COIHUE AMARILLO 1P",p:14113},
-{s:"CTOTVRGR_4P",n:"CARPA TOTORALILLO VERDE/GRIS 4P",p:75625},
-{s:"CTOTVRGR_8P",n:"CARPA TOTORALILLO VERDE/GRIS 8P",p:151255},
-{s:"COHULI1P_VR",n:"COLCHONETA INFLABLE HUERQUEHUE VERDE 1P",p:35289},
-{s:"CALCAM_NAR",n:"COLCHONETA AISLANTE LA CAMPANA GRIS 1P",p:20163},
-{s:"MCPCALBL_180",n:"MESA PLEGABLE CAMPING CALBUCO BLANCO 180CM",p:25205},
-{s:"TEPLCAL_VR",n:"TETERA PLEGABLE CALAFATE VERDE 1LT",p:11592},
-{s:"SETBLAV_VR",n:"SET 2 BOWLS + CUBIERTOS AVELLANA VERDE",p:13608},
-{s:"OPMQVR_2.5LT",n:"OLLA PLEGABLE MAQUI VERDE 2.5LT",p:21676},
-{s:"CRCPNG_1LT",n:"COCINILLA RÁPIDA CUERNOS DEL PAINE NEGRO 1LT",p:35289},
-{s:"LFALNG_195",n:"LINTERNA FRONTAL ALMA AZUL/NEGRO 195LUM",p:10079},
-{s:"LFPAVR_380",n:"LINTERNA FRONTAL PARANAL VERDE 380LUM",p:15121},
-{s:"FOUTOL_470",n:"FOCO OUTDOOR LED TOLOLO 470LUM",p:21676},
-{s:"FOUTOL_1600",n:"FOCO OUTDOOR LED TOLOLO 1600LUM",p:25205},
-{s:"LILEDCRSUR",n:"LINTERNA LED LINE BLANCO 300LUM",p:11592},
-{s:"TELQAZ_M",n:"TOALLA MICROFIBRA ELQUI AZUL M",p:4029},
-{s:"TELQGR_M",n:"TOALLA MICROFIBRA ELQUI GRIS M",p:4029},
-{s:"TELQVR_M",n:"TOALLA MICROFIBRA ELQUI VERDE M",p:4029},
-{s:"TELQAZ_XL",n:"TOALLA MICROFIBRA ELQUI AZUL XL",p:7558},
-{s:"TELQGR_XL",n:"TOALLA MICROFIBRA ELQUI GRIS XL",p:7558},
-{s:"TMAUAM_XL",n:"TOALLA MICROFIBRA ULTRA LIGERA MAULLIN AZUL MARINO XL",p:8062},
-{s:"TMAUGC_XL",n:"TOALLA MICROFIBRA ULTRA LIGERA MAULLIN GRIS XL",p:8062},
-{s:"MTNALVR_L",n:"MANTA TÉRMICA NALCA VERDE L",p:25205},
-{s:"BCPTOL_GRREC",n:"BASURERO CAMPING PLEGABLE TOLTÉN GRIS RECICLAJE",p:9575},
-{s:"dispatch_cost_lp",n:"Despacho a domicilio",p:15000},
-{s:"Personalizacion",n:"Estampado / Personalización",p:3000}
+function sbH(){return{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};}
+async function sbGet(t,p){var r=await fetch(SB_URL+'/rest/v1/'+t+'?'+(p||''),{headers:sbH()});return r.json();}
+async function sbPost(t,b){var r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify(b)});return r.json();}
+async function sbPatch(t,id,b){var r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify(b)});return r.json();}
+async function sbDelete(t,id){await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:sbH()});}
+
+var SEED=[
+  {cliente:'TANAX',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:3000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BUIN ZOO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Organización',fuente:'',resp:'Balta',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'EXPLORA TOALLAS',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Cliente Antiguo',resp:'Balta',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CCU REGALO FIN DE AÑO',empresa:'CCU S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'VINCI COMPASS',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'',resp:'Balta',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Conseguir mail',next_date:null,razon_perdida:''},
+  {cliente:'EXPLORA PANTUFLAS',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Cliente Antiguo',resp:'Balta',monto:20000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BUK',empresa:'BUK S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'RRHH',fuente:'Cliente Antiguo',resp:'Balta',monto:30000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BCI',empresa:'Banco BCI',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'',resp:'Balta',monto:34000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ENEX PROMO GRANDE VERANO',empresa:'ENEX S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Energía',fuente:'Cliente Antiguo',resp:'Balta',monto:150000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Espera cotización proveedores',next_date:null,razon_perdida:''},
+  {cliente:'ENEX REGALO CORPORATIVO',empresa:'ENEX S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Energía',fuente:'Cliente Antiguo',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CONCHA Y TORO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Viña',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ARIZTIA',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'HOTEL HANGA ROA',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:312827,estado:'Trato ganado',lifetime:7,fecha_creado:'2026-03-12',fecha_ganado:'2026-03-19',fecha_perdido:null,comentario:'Despachar a cliente',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ISABEL VIAL',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Persona Natural',fuente:'Referido',resp:'Ignacio',monto:231139,estado:'Trato ganado',lifetime:3,fecha_creado:'2026-03-13',fecha_ganado:'2026-03-16',fecha_perdido:null,comentario:'Despachar a cliente',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'DESTINORIENTE',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Correo Atakama',resp:'Ignacio',monto:1990750,estado:'Trato ganado',lifetime:1,fecha_creado:'2026-02-25',fecha_ganado:'2026-02-26',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BEYOND',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:375433,estado:'Trato ganado',lifetime:6,fecha_creado:'2026-02-26',fecha_ganado:'2026-03-04',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'DISCOVERYMERCH',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Marketing',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Reunión Martes 24/03',next_date:'2026-03-24',razon_perdida:''},
+  {cliente:'GEOTERRA VIAJES',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Posibilidad equipar guías',next_date:null,razon_perdida:''},
+  {cliente:'YPO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Organización',fuente:'Correo Atakama',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Seguimiento compra',next_date:null,razon_perdida:''},
+  {cliente:'BOMBEROS DE SANTIAGO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Organización',fuente:'Correo Atakama',resp:'Ignacio',monto:2800000,estado:'Trato perdido',lifetime:1,fecha_creado:'2026-03-16',fecha_ganado:null,fecha_perdido:'2026-03-17',comentario:'No quiso mochila',next_action:'',next_date:null,razon_perdida:'Desiste de la compra'},
+  {cliente:'HOTEL TERMAS DE CHILLÁN',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Conv. encargado bodega',next_date:null,razon_perdida:''},
+  {cliente:'BUK (Ignacio)',empresa:'BUK S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'RRHH',fuente:'Cliente Antiguo',resp:'Ignacio',monto:1062718,estado:'Trato ganado',lifetime:4,fecha_creado:'2026-03-05',fecha_ganado:'2026-03-09',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CCU (ROYAL)',empresa:'CCU S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'Cliente Antiguo',resp:'Ignacio',monto:3600000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-17',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Evaluando compra',next_date:null,razon_perdida:''},
+  {cliente:'CHILENATIVO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Despachar muestras',next_date:null,razon_perdida:''},
+  {cliente:'BIZAGRA',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Marketing',fuente:'Correo Atakama',resp:'Ignacio',monto:410550,estado:'Trato ganado',lifetime:1,fecha_creado:'2026-03-03',fecha_ganado:'2026-03-04',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'RIA MT',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'Correo Atakama',resp:'Ignacio',monto:1195831,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-18',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando aprobación RRHH',next_date:null,razon_perdida:''},
+  {cliente:'MASTERCARD',empresa:'Mastercard Inc.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'Correo Atakama',resp:'Ignacio',monto:928345,estado:'Trato perdido',lifetime:1,fecha_creado:'2026-03-12',fecha_ganado:null,fecha_perdido:'2026-03-13',comentario:'No aprueban presupuesto',next_action:'',next_date:null,razon_perdida:'Precio muy alto'},
+  {cliente:'CHIPAX',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Logística',fuente:'Correo Atakama',resp:'Ignacio',monto:2407510,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-13',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Compra segundo semestre',next_date:null,razon_perdida:''},
+  {cliente:'CCU',empresa:'CCU S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'Cliente Antiguo',resp:'Ignacio',monto:952992,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando stock chaqueta',next_date:null,razon_perdida:''},
+  {cliente:'ERMITAÑO EXPEDICIONES',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'TUR COPEC',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Correo Atakama',resp:'Ignacio',monto:330000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-20',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'HOTEL CASCADAS',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'Hotel',fuente:'',resp:'Ignacio',monto:2500000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-13',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando OC',next_date:null,razon_perdida:''},
+  {cliente:'PLAYARTE MATANZA',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:653653,estado:'Trato ganado',lifetime:5,fecha_creado:'2026-03-12',fecha_ganado:'2026-03-17',fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CHELECH',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:16000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'8 en marzo, 8 en abril',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'TIENDA PORVENIR',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:3043542,estado:'Trato ganado',lifetime:4,fecha_creado:'2026-03-09',fecha_ganado:'2026-03-13',fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'TRAVEL CLUB',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:4000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'BRAVIUM',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'INDUSMAT',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:3062000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'CASA ALICIA',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'TERRAOUTDOOR',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''}
 ];
 
-let items=[];
+function today(){return new Date().toISOString().slice(0,10);}
+function fmt(n){return Number(n)>0?'$'+Number(n).toLocaleString('es-CL'):'-';}
+function daysAgo(d){if(!d)return 999;return Math.round((new Date()-new Date(d))/86400000);}
+function calcLifetime(c,e){if(!c||!e)return 0;return Math.max(0,Math.round((new Date(e)-new Date(c))/86400000));}
+function badgeClass(s){return({'Cotización enviada':'badge-cot','Catálogo enviado':'badge-cat','Trato ganado':'badge-gan','Trato perdido':'badge-per','Negociación':'badge-neg','Contactado':'badge-con'}[s]||'badge-con');}
+function isStale(d){if(d.estado==='Trato ganado'||d.estado==='Trato perdido')return false;var h=histMap[d.id]||[],last=h.length?h[h.length-1].fecha:d.fecha_creado;return daysAgo(last)>=STALE;}
+function setSyncState(s,l){document.getElementById('sync-dot').className='sync-dot'+(s==='error'?' error':s==='loading'?' loading':'');document.getElementById('sync-label').textContent=l;}
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function destroyChart(id){if(charts[id]){charts[id].destroy();charts[id]=null;}}
 
-function fmt(n){return '$'+Math.round(n).toLocaleString('es-CL');}
-function updateLbl(){document.getElementById('cotLabel').textContent='Cotización N° '+(document.getElementById('cotNum').value||'—');}
-function showMsg(txt,type){const m=document.getElementById('smsg');m.textContent=txt;m.className='smsg '+(type==='ok'?'sok':'serr');}
+function showPage(p){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('page-'+p).classList.add('active');
+  var nm={dashboard:0,funnel:1,deals:2,clients:3,prospects:4,new:6};
+  if(nm[p]!==undefined) document.querySelectorAll('.nav-item')[nm[p]].classList.add('active');
+  if(p==='dashboard') renderDashboard();
+  if(p==='funnel') renderFunnel();
+  if(p==='deals') renderDealsTable();
+  if(p==='clients') renderClientsTable();
+  if(p==='prospects') renderProspects();
+  if(p==='new') resetNewForm();
+}
 
-async function getNextCotNumber(){
+async function init(){
+  setSyncState('loading','Conectando...');
   try{
-    const res=await fetch(SHEETS_URL+'?action=lastNumber');
-    const data=await res.json();
-    if(data.status==='OK') return parseInt(data.last)+1;
-  }catch(e){}
-  return 461;
+    var ex=await sbGet('deals','select=id&limit=1');
+    if(!Array.isArray(ex)||ex.length===0){
+      showToast('Primera carga: migrando datos...');
+      for(var i=0;i<SEED.length;i++){
+        var rows=await sbPost('deals',SEED[i]);
+        if(Array.isArray(rows)&&rows[0]) await sbPost('history',{deal_id:rows[0].id,fecha:rows[0].fecha_creado||today(),texto:'Trato creado · '+rows[0].estado});
+      }
+    }
+    await loadAll();
+    setSyncState('ok','Conectado');
+    document.getElementById('loading-overlay').style.display='none';
+    renderDashboard();
+  }catch(e){
+    setSyncState('error','Sin conexión');
+    document.getElementById('loading-overlay').innerHTML='<div style="text-align:center;color:#ef4444;padding:20px"><div style="font-size:32px">⚠️</div><div style="margin-top:8px">Error conectando</div><div style="font-size:11px;color:#64748b;margin-top:4px">'+e.message+'</div></div>';
+  }
 }
 
-document.getElementById('searchInput').addEventListener('input',function(){
-  const q=this.value.toLowerCase().trim();
-  const dd=document.getElementById('dd');
-  const body=document.getElementById('ddBody');
-  if(!q){dd.style.display='none';return;}
-  const res=P.filter(p=>p.s.toLowerCase().includes(q)||p.n.toLowerCase().includes(q)).slice(0,12);
-  if(!res.length){dd.style.display='none';return;}
-  body.innerHTML=res.map(p=>`<div class="dd-row" onmousedown="addItem('${p.s}')"><span class="dd-sku">${p.s}</span><span class="dd-name">${p.n}</span><span class="dd-price">${fmt(p.p)}</span></div>`).join('');
-  dd.style.display='block';
-});
-document.getElementById('searchInput').addEventListener('blur',function(){
-  setTimeout(()=>{document.getElementById('dd').style.display='none';},150);
-});
-
-function addItem(sku){
-  const p=P.find(x=>x.s===sku);
-  if(!p)return;
-  const ex=items.find(i=>i.s===sku);
-  if(ex)ex.q++;else items.push({s:p.s,n:p.n,p:p.p,q:1});
-  document.getElementById('searchInput').value='';
-  document.getElementById('dd').style.display='none';
-  renderTable();recalc();
+async function loadAll(){
+  var res=await Promise.all([
+    sbGet('deals','select=*&order=fecha_creado.desc.nullslast'),
+    sbGet('history','select=*&order=created_at.asc'),
+    sbGet('prospects','select=*&order=created_at.desc')
+  ]);
+  deals=res[0]; histMap={};
+  res[1].forEach(function(h){if(!histMap[h.deal_id])histMap[h.deal_id]=[];histMap[h.deal_id].push(h);});
+  prospects=Array.isArray(res[2])?res[2]:[];
+  updateProspectBadge();
 }
 
-function renderTable(){
-  const empty=document.getElementById('emptyState');
-  const tbl=document.getElementById('tbl');
-  if(!items.length){empty.style.display='block';tbl.style.display='none';return;}
-  empty.style.display='none';tbl.style.display='table';
-  document.getElementById('tblBody').innerHTML=items.map((it,i)=>`
-    <tr>
-      <td style="font-size:11px;color:#999;font-family:monospace">${it.s}</td>
-      <td>${it.n}</td>
-      <td class="tc"><input type="number" class="qinput" min="1" value="${it.q}" oninput="upQty(${i},this.value)"></td>
-      <td class="tr"><input type="number" class="qinput" style="width:90px;text-align:right" min="0" value="${it.p}" oninput="upPrice(${i},this.value)"></td>
-      <td class="tr">${fmt(it.p*it.q)}</td>
-      <td class="tc"><button class="bdel" onclick="delItem(${i})">✕</button></td>
-    </tr>`).join('');
+function updateProspectBadge(){
+  var n=prospects.filter(function(p){return !p.revisado;}).length;
+  var badge=document.getElementById('pros-nav-badge');
+  if(badge){badge.textContent=n;badge.style.display=n>0?'inline':'none';}
 }
 
-function upQty(i,v){items[i].q=Math.max(1,parseInt(v)||1);renderTable();recalc();}
-function upPrice(i,v){items[i].p=Math.max(0,parseInt(v)||0);recalc();}
-function delItem(i){items.splice(i,1);renderTable();recalc();}
+var pctPlugin={id:'pctLabels',afterDatasetsDraw:function(chart){
+  var ctx=chart.ctx,ds=chart.data.datasets[0];
+  var total=ds.data.reduce(function(a,b){return a+b;},0);
+  chart.getDatasetMeta(0).data.forEach(function(arc,i){
+    var val=ds.data[i];if(!val)return;
+    var pct=Math.round(val/total*100);if(pct<6)return;
+    var pos=arc.tooltipPosition();
+    ctx.save();ctx.fillStyle='#fff';ctx.font='bold 10px Segoe UI';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=4;
+    ctx.fillText(pct+'%',pos.x,pos.y);ctx.restore();
+  });
+}};
 
-function recalc(){
-  const disc=parseFloat(document.getElementById('discount').value)||0;
-  const sub=items.reduce((s,it)=>s+it.p*it.q,0);
-  const da=sub*(disc/100);
-  const net=sub-da;
-  const iva=net*0.19;
-  document.getElementById('tSub').textContent=fmt(sub);
-  document.getElementById('tDiscLbl').textContent='Descuento ('+disc+'%)';
-  document.getElementById('tDisc').textContent=disc>0?'-'+fmt(da):'-$0';
-  document.getElementById('tNet').textContent=fmt(net);
-  document.getElementById('tIva').textContent=fmt(iva);
-  document.getElementById('tTotal').textContent=fmt(net+iva);
+function makePieChart(id,labels,data){
+  destroyChart(id);
+  var total=data.reduce(function(a,b){return a+b;},0);
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels:labels,datasets:[{data:data,backgroundColor:PIE.slice(0,labels.length),borderWidth:2,borderColor:'#1e2535'}]},
+    options:{cutout:'46%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:6}},tooltip:{callbacks:{label:function(ctx){var pct=total?Math.round(ctx.raw/total*100):0;return ' '+ctx.label+': '+ctx.raw+' ('+pct+'%)';}}}},layout:{padding:4}},
+    plugins:[pctPlugin]
+  });
 }
 
-async function clearAll(){
-  if(items.length&&!confirm('¿Limpiar cotización?'))return;
-  items=[];
-  ['empresa','rut','contacto'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('discount').value=0;
-  window.history.replaceState({},'',window.location.pathname);
-  const next=await getNextCotNumber();
-  document.getElementById('cotNum').value=next;
-  updateLbl();renderTable();recalc();
-  const m=document.getElementById('smsg');m.className='smsg';m.textContent='';
+function getFiltered(){
+  var canal=(document.getElementById('db-canal')||{}).value||'all';
+  var resp=(document.getElementById('db-resp')||{}).value||'all';
+  var cat=(document.getElementById('db-cat')||{}).value||'all';
+  return deals.filter(function(d){return(canal==='all'||d.canal===canal)&&(resp==='all'||d.resp===resp)&&(cat==='all'||d.cat===cat);});
+}
+
+function renderDashboard(){
+  var d=getFiltered();
+  var gan=d.filter(function(x){return x.estado==='Trato ganado';});
+  var per=d.filter(function(x){return x.estado==='Trato perdido';});
+  var act=d.filter(function(x){return x.estado!=='Trato ganado'&&x.estado!=='Trato perdido';});
+  var tG=gan.reduce(function(a,x){return a+Number(x.monto);},0);
+  var aov=gan.length?Math.round(tG/gan.length):0;
+  var lts=gan.filter(function(x){return x.lifetime>0;}).map(function(x){return x.lifetime;});
+  var dur=lts.length?(lts.reduce(function(a,b){return a+b;},0)/lts.length).toFixed(1):'-';
+  var cot=d.filter(function(x){return x.estado==='Cotización enviada'||x.estado==='Trato ganado'||x.estado==='Trato perdido';});
+  var conv=cot.length?Math.round(gan.length/cot.length*100):0;
+  var pipe=act.reduce(function(a,x){return a+Number(x.monto);},0);
+
+  document.getElementById('kpi-grid').innerHTML=
+    '<div class="kpi green"><div class="kpi-label">Tratos Ganados</div><div class="kpi-val">'+gan.length+'</div><div class="kpi-sub">'+fmt(tG)+'</div></div>'+
+    '<div class="kpi blue"><div class="kpi-label">Pipeline Activo</div><div class="kpi-val">'+fmt(pipe)+'</div><div class="kpi-sub">'+act.length+' tratos abiertos</div></div>'+
+    '<div class="kpi yellow"><div class="kpi-label">AOV</div><div class="kpi-val">'+fmt(aov)+'</div><div class="kpi-sub">Ticket promedio ganados</div></div>'+
+    '<div class="kpi purple"><div class="kpi-label">Duración Prom.</div><div class="kpi-val">'+dur+' días</div><div class="kpi-sub">Creación → Cierre</div></div>'+
+    '<div class="kpi"><div class="kpi-label">Conversión</div><div class="kpi-val">'+conv+'%</div><div class="kpi-sub">Cotizados → Ganados</div></div>'+
+    '<div class="kpi red"><div class="kpi-label">Tratos Perdidos</div><div class="kpi-val">'+per.length+'</div><div class="kpi-sub">'+fmt(per.reduce(function(a,x){return a+Number(x.monto);},0))+'</div></div>';
+
+  document.getElementById('canal-split').innerHTML=['Corporativo','WS'].map(function(c){
+    var cd=deals.filter(function(x){return x.canal===c;});
+    var cg=cd.filter(function(x){return x.estado==='Trato ganado';});
+    var cc=cd.filter(function(x){return x.estado==='Cotización enviada'||x.estado==='Trato ganado'||x.estado==='Trato perdido';});
+    var aovC=cg.length?Math.round(cg.reduce(function(a,x){return a+Number(x.monto);},0)/cg.length):0;
+    return '<div class="canal-card"><h3>'+(c==='WS'?'🛍 Wholesale':'🏢 Corporativo')+'</h3>'+
+      '<div class="canal-stat"><span>Tratos totales</span><span>'+cd.length+'</span></div>'+
+      '<div class="canal-stat"><span>Tratos ganados</span><span style="color:var(--green)">'+cg.length+'</span></div>'+
+      '<div class="canal-stat"><span>Conversión</span><span>'+(cc.length?Math.round(cg.length/cc.length*100):0)+'%</span></div>'+
+      '<div class="canal-stat"><span>Vol. ganado</span><span>'+fmt(cg.reduce(function(a,x){return a+Number(x.monto);},0))+'</span></div>'+
+      '<div class="canal-stat"><span>Vol. cotizado</span><span>'+fmt(cd.filter(function(x){return x.estado==='Cotización enviada';}).reduce(function(a,x){return a+Number(x.monto);},0))+'</span></div>'+
+      '<div class="canal-stat"><span>AOV</span><span>'+fmt(aovC)+'</span></div></div>';
+  }).join('');
+
+  var estados=['Contactado','Catálogo enviado','Cotización enviada','Negociación','Trato ganado','Trato perdido'];
+  makePieChart('chartEstado',estados,estados.map(function(e){return d.filter(function(x){return x.estado===e;}).length;}));
+
+  destroyChart('chartVendedor');
+  var resps=['Balta','Ignacio','Tomás'];
+  charts['chartVendedor']=new Chart(document.getElementById('chartVendedor'),{
+    type:'bar',
+    data:{labels:resps,datasets:[
+      {label:'Ganados',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado==='Trato ganado';}).length;}),backgroundColor:'#22c55e',borderRadius:4},
+      {label:'Activos',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado!=='Trato ganado'&&x.estado!=='Trato perdido';}).length;}),backgroundColor:'#3b82f6',borderRadius:4},
+      {label:'Perdidos',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado==='Trato perdido';}).length;}),backgroundColor:'#ef4444',borderRadius:4}
+    ]},
+    options:{scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}}},plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},barPercentage:.7}
+  });
+
+  var fuentes=['Cliente Antiguo','Prospecto','Correo Atakama','Referido','Formulario Web','Sin especificar'];
+  makePieChart('chartFuente',fuentes,fuentes.map(function(f){return d.filter(function(x){return(x.fuente||'Sin especificar')===f;}).length;}));
+
+  var kc=[];deals.forEach(function(x){if(x.cat&&kc.indexOf(x.cat)===-1)kc.push(x.cat);});
+  var sc=d.filter(function(x){return !x.cat;}).length;
+  var cats=sc>0?kc.concat(['Sin categoría']):kc.slice();
+  var cc2=kc.map(function(c){return d.filter(function(x){return x.cat===c;}).length;});if(sc>0)cc2.push(sc);
+  var cp=cats.map(function(c,i){return{c:c,n:cc2[i]};}).filter(function(x){return x.n>0;}).sort(function(a,b){return b.n-a.n;});
+  destroyChart('chartCategoria');
+  charts['chartCategoria']=new Chart(document.getElementById('chartCategoria'),{
+    type:'bar',
+    data:{labels:cp.map(function(x){return x.c.length>12?x.c.slice(0,12)+'…':x.c;}),datasets:[{label:'Tratos',data:cp.map(function(x){return x.n;}),backgroundColor:cp.map(function(_,i){return PIE[i%PIE.length];}),borderRadius:4}]},
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var cat=cp[ctx.dataIndex]?cp[ctx.dataIndex].c:'';var tot=d.filter(function(x){return(x.cat||'Sin categoría')===cat;}).reduce(function(a,x){return a+Number(x.monto);},0);return ' '+ctx.raw+' tratos · '+fmt(tot);}}}}}
+  });
+
+  var reasons=['Proveedor alternativo','Desiste de la compra','Solo cotiza','Falta de stock','Precio muy alto','Sin respuesta'];
+  var rc=reasons.map(function(r){return d.filter(function(x){return x.razon_perdida===r;}).length;});
+  destroyChart('chartPerdida');
+  charts['chartPerdida']=new Chart(document.getElementById('chartPerdida'),{
+    type:'bar',
+    data:{labels:reasons.map(function(r){return r.length>16?r.slice(0,16)+'…':r;}),datasets:[{data:rc,backgroundColor:rc.map(function(n){return n>0?'#ef4444':'#2a3347';}),borderRadius:4}]},
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'},min:0},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false}}}
+  });
+}
+
+function renderFunnel(){
+  var canal=(document.getElementById('fn-canal')||{}).value||'all';
+  var resp=(document.getElementById('fn-resp')||{}).value||'all';
+  var d=deals.filter(function(x){return(canal==='all'||x.canal===canal)&&(resp==='all'||x.resp===resp);});
+  var sl=d.filter(function(x){return isStale(x);});
+  document.getElementById('funnel-alerts').innerHTML=sl.length?'<div class="alert-strip">⏰ '+sl.length+' trato(s) sin actividad +'+STALE+' días: '+sl.map(function(x){return x.cliente;}).join(', ')+'</div>':'';
+  var stages=[{key:'Contactado',cls:'col-contactado',label:'Contactado'},{key:'Catálogo enviado',cls:'col-catalogo',label:'Catálogo'},{key:'Cotización enviada',cls:'col-cotizacion',label:'Cotización'},{key:'Negociación',cls:'col-negociacion',label:'Negociación'},{key:'Trato ganado',cls:'col-ganado',label:'✅ Ganado'},{key:'Trato perdido',cls:'col-perdido',label:'❌ Perdido'}];
+  var html='';
+  for(var si=0;si<stages.length;si++){
+    var s=stages[si];
+    var items=d.filter(function(x){return x.estado===s.key;}).sort(function(a,b){if(!a.fecha_creado&&!b.fecha_creado)return 0;if(!a.fecha_creado)return 1;if(!b.fecha_creado)return -1;return new Date(b.fecha_creado)-new Date(a.fecha_creado);});
+    var total=items.reduce(function(a,x){return a+Number(x.monto);},0);
+    var cards='';
+    for(var ci=0;ci<items.length;ci++){
+      var deal=items[ci];
+      var stale=isStale(deal);
+      var cls='deal-card';
+      if(stale)cls+=' stale';else if(!deal.fecha_creado)cls+=' no-date';else if(!deal.monto||deal.monto==0)cls+=' no-amount';
+      var hist=histMap[deal.id]||[],lastDate=hist.length?hist[hist.length-1].fecha:deal.fecha_creado;
+      cards+='<div class="'+cls+'" data-id="'+deal.id+'" draggable="true">'+
+        '<div class="deal-name">'+deal.cliente+'</div>'+
+        '<div class="deal-amt '+(Number(deal.monto)>0?'has':'none')+'">'+(Number(deal.monto)>0?fmt(deal.monto):'Sin monto')+'</div>'+
+        '<div class="deal-meta"><span class="deal-resp">'+deal.resp+'</span><div class="deal-tags"><span class="tag '+(deal.canal==='WS'?'tag-ws':'tag-corp')+'">'+deal.canal+'</span>'+(stale?'<span class="tag tag-stale">'+daysAgo(lastDate)+'d</span>':'')+'</div></div>'+
+        (deal.next_action?'<div class="deal-next">▶ '+deal.next_action+(deal.next_date?' · '+deal.next_date.slice(5):'')+'</div>':'')+
+        '</div>';
+    }
+    html+='<div class="funnel-col '+s.cls+'" data-stage="'+s.key+'">'+
+      '<div class="funnel-header"><div class="fh-top"><h3>'+s.label+'</h3><span class="stage-count">'+items.length+'</span></div>'+(total>0?'<div class="stage-total">'+fmt(total)+'</div>':'')+'</div>'+
+      '<div class="funnel-cards">'+cards+'</div></div>';
+  }
+  document.getElementById('funnel-wrap').innerHTML=html;
+  document.querySelectorAll('.deal-card').forEach(function(card){
+    card.addEventListener('dragstart',function(e){dragActive=true;dragId=parseInt(card.getAttribute('data-id'));e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragend',function(){setTimeout(function(){dragActive=false;},50);});
+    card.addEventListener('click',function(e){e.stopPropagation();if(dragActive)return;openEdit(parseInt(card.getAttribute('data-id')));});
+  });
+  document.querySelectorAll('.funnel-col').forEach(function(col){
+    col.addEventListener('dragover',function(e){e.preventDefault();col.classList.add('drop-active');});
+    col.addEventListener('dragleave',function(){col.classList.remove('drop-active');});
+    col.addEventListener('drop',function(e){e.preventDefault();col.classList.remove('drop-active');handleDrop(col.getAttribute('data-stage'));});
+  });
+}
+
+async function handleDrop(stage){
+  if(!dragId)return;
+  var deal=null;for(var i=0;i<deals.length;i++){if(deals[i].id===dragId){deal=deals[i];break;}}dragId=null;
+  if(!deal||deal.estado===stage)return;
+  if(stage==='Trato perdido'){pendingLossId=deal.id;selReason_val='';document.getElementById('modal-loss').classList.add('show');return;}
+  setSyncState('loading','Guardando...');
+  var upd={estado:stage};
+  if(stage==='Trato ganado'&&!deal.fecha_ganado)upd.fecha_ganado=today();
+  await sbPatch('deals',deal.id,upd);
+  await sbPost('history',{deal_id:deal.id,fecha:today(),texto:'→ '+stage});
+  await loadAll();setSyncState('ok','Conectado');showToast('✅ Trato actualizado');renderFunnel();
+}
+
+function openEdit(id){
+  editingId=id;
+  var d=null;for(var i=0;i<deals.length;i++){if(deals[i].id===id){d=deals[i];break;}}if(!d)return;
+  document.getElementById('edit-title').textContent=d.cliente;
+  document.getElementById('ef-cliente').value=d.cliente;
+  document.getElementById('ef-empresa').value=d.empresa||'';
+  document.getElementById('ef-rut').value=d.rut||'';
+  document.getElementById('ef-celular').value=d.celular||'';
+  document.getElementById('ef-email').value=d.email||'';
+  document.getElementById('ef-canal').value=d.canal;
+  document.getElementById('ef-cat').value=d.cat||'';
+  document.getElementById('ef-resp').value=d.resp;
+  document.getElementById('ef-fuente').value=d.fuente||'';
+  document.getElementById('ef-estado').value=d.estado;
+  document.getElementById('ef-monto').value=d.monto||0;
+  document.getElementById('ef-fechaCreado').value=d.fecha_creado||'';
+  document.getElementById('ef-fechaGanado').value=d.fecha_ganado||'';
+  document.getElementById('ef-razon').value=d.razon_perdida||'';
+  document.getElementById('ef-next').value=d.next_action||'';
+  document.getElementById('ef-nextdate').value=d.next_date||'';
+  document.getElementById('ef-comentario').value=d.comentario||'';
+  var hist=histMap[id]||[],hhtml='';
+  if(hist.length){var rev=hist.slice().reverse();for(var i=0;i<rev.length;i++){hhtml+='<div class="hist-item"><div class="hist-dot"></div><span class="hist-date">'+rev[i].fecha.slice(5)+'</span><span class="hist-text">'+rev[i].texto+'</span></div>';}}
+  else hhtml='<p style="color:var(--text3);font-size:11px">Sin historial registrado.</p>';
+  document.getElementById('ef-history').innerHTML=hhtml;
+  document.getElementById('ef-del-btn').onclick=function(){if(confirm('¿Eliminar este trato?'))deleteDeal(id);};
+  document.getElementById('modal-edit').classList.add('show');
+}
+
+async function saveEdit(){
+  var d=null;for(var i=0;i<deals.length;i++){if(deals[i].id===editingId){d=deals[i];break;}}if(!d)return;
+  var newEstado=document.getElementById('ef-estado').value;
+  if(newEstado==='Trato perdido'&&!document.getElementById('ef-razon').value){alert('Selecciona una razón de pérdida.');return;}
+  var fc=document.getElementById('ef-fechaCreado').value||null;
+  var fg=document.getElementById('ef-fechaGanado').value||null;
+  if(!fg&&newEstado==='Trato ganado')fg=today();
+  var fcierre=fg||(newEstado==='Trato perdido'?today():null);
+  var upd={cliente:document.getElementById('ef-cliente').value.trim().toUpperCase(),empresa:document.getElementById('ef-empresa').value,rut:document.getElementById('ef-rut').value,celular:document.getElementById('ef-celular').value,email:document.getElementById('ef-email').value,canal:document.getElementById('ef-canal').value,cat:document.getElementById('ef-cat').value,resp:document.getElementById('ef-resp').value,fuente:document.getElementById('ef-fuente').value,estado:newEstado,monto:parseFloat(document.getElementById('ef-monto').value)||0,fecha_creado:fc,fecha_ganado:fg,razon_perdida:document.getElementById('ef-razon').value,next_action:document.getElementById('ef-next').value,next_date:document.getElementById('ef-nextdate').value||null,comentario:document.getElementById('ef-comentario').value,lifetime:calcLifetime(fc,fcierre)};
+  setSyncState('loading','Guardando...');
+  if(newEstado!==d.estado){
+    var note=newEstado==='Trato ganado'?'→ Trato ganado':newEstado==='Trato perdido'?'→ Trato perdido · '+upd.razon_perdida:'→ '+newEstado;
+    await sbPost('history',{deal_id:d.id,fecha:today(),texto:note});
+  } else {
+    var parts=[];
+    if(upd.next_action!==d.next_action&&upd.next_action)parts.push('▶ '+upd.next_action+(upd.next_date?' · '+upd.next_date.slice(5):''));
+    if(upd.comentario!==d.comentario&&upd.comentario)parts.push('💬 '+upd.comentario);
+    if(Number(upd.monto)!==Number(d.monto)&&upd.monto>0)parts.push('💰 '+fmt(upd.monto));
+    if(parts.length)await sbPost('history',{deal_id:d.id,fecha:today(),texto:parts.join(' · ')});
+  }
+  await sbPatch('deals',d.id,upd);await loadAll();setSyncState('ok','Conectado');showToast('✅ Guardado');
+  closeModal('modal-edit');renderDealsTable();renderFunnel();
+  if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();
+}
+
+async function deleteDeal(id){
+  setSyncState('loading','Eliminando...');
+  await sbDelete('deals',id);await loadAll();setSyncState('ok','Conectado');
+  showToast('🗑 Trato eliminado');closeModal('modal-edit');renderDealsTable();renderFunnel();
+}
+
+function renderDealsTable(){
+  var q=((document.getElementById('deals-search')||{}).value||'').toLowerCase();
+  var est=(document.getElementById('deals-estado')||{}).value||'all';
+  var resp=(document.getElementById('deals-resp')||{}).value||'all';
+  var canal=(document.getElementById('deals-canal')||{}).value||'all';
+  var monto=(document.getElementById('deals-monto')||{}).value||'all';
+  var filtered=deals.filter(function(d){return(d.cliente.toLowerCase().includes(q)||(d.empresa||'').toLowerCase().includes(q)||(d.rut||'').toLowerCase().includes(q))&&(est==='all'||d.estado===est)&&(resp==='all'||d.resp===resp)&&(canal==='all'||d.canal===canal)&&(monto==='all'||(monto==='zero'?!d.monto||d.monto==0:d.monto>0));});
+  var html='';
+  for(var i=0;i<filtered.length;i++){
+    var d=filtered[i];
+    html+='<tr>'+
+      '<td style="color:var(--text3);font-size:11px">'+d.id+'</td>'+
+      '<td style="font-weight:600;color:var(--accent);cursor:pointer" onclick="openEdit('+d.id+')">'+d.cliente+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.empresa||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.rut||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.celular||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.email||'-')+'</td>'+
+      '<td><span class="tag '+(d.canal==='WS'?'tag-ws':'tag-corp')+'">'+d.canal+'</span></td>'+
+      '<td>'+d.resp+'</td>'+
+      '<td style="font-weight:600">'+(Number(d.monto)>0?fmt(d.monto):'<span style="color:var(--text3)">-</span>')+'</td>'+
+      '<td><span class="badge '+badgeClass(d.estado)+'">'+d.estado+'</span></td>'+
+      '<td><button class="btn btn-secondary btn-sm" onclick="openEdit('+d.id+')">✏️</button></td>'+
+      '</tr>';
+  }
+  document.getElementById('deals-tbody').innerHTML=html;
+}
+
+function renderClientsTable(){
+  var q=((document.getElementById('cli-search')||{}).value||'').toLowerCase();
+  var canal=(document.getElementById('cli-canal')||{}).value||'all';
+  var map={};
+  deals.filter(function(d){return(d.cliente.toLowerCase().includes(q)||(d.empresa||'').toLowerCase().includes(q))&&(canal==='all'||d.canal===canal);}).forEach(function(d){
+    if(!map[d.cliente])map[d.cliente]={cliente:d.cliente,empresa:d.empresa||'',rut:d.rut||'',celular:d.celular||'',email:d.email||'',canal:d.canal,cat:d.cat,resp:d.resp,tratos:0,total:0};
+    map[d.cliente].tratos++;map[d.cliente].total+=Number(d.monto);
+  });
+  var html='';
+  Object.values(map).forEach(function(c){
+    html+='<tr>'+
+      '<td style="font-weight:600">'+c.cliente+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.empresa||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.rut||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.celular||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.email||'-')+'</td>'+
+      '<td><span class="tag '+(c.canal==='WS'?'tag-ws':'tag-corp')+'">'+c.canal+'</span></td>'+
+      '<td style="color:var(--text3);font-size:11px">'+(c.cat||'-')+'</td>'+
+      '<td>'+c.resp+'</td>'+
+      '<td style="text-align:center">'+c.tratos+'</td>'+
+      '<td style="font-weight:600;color:var(--accent)">'+fmt(c.total)+'</td>'+
+      '</tr>';
+  });
+  document.getElementById('cli-tbody').innerHTML=html;
+}
+
+function renderProspects(){
+  var q=((document.getElementById('pros-search')||{}).value||'').toLowerCase();
+  var filter=(document.getElementById('pros-filter')||{}).value||'all';
+  var filtered=prospects.filter(function(p){
+    var mq=!q||(p.nombre||'').toLowerCase().includes(q)||(p.empresa||'').toLowerCase().includes(q)||(p.email||'').toLowerCase().includes(q);
+    var mf=filter==='all'||(filter==='new'&&!p.revisado)||(filter==='reviewed'&&p.revisado);
+    return mq&&mf;
+  });
+  var nc=prospects.filter(function(p){return !p.revisado;}).length;
+  var cel=document.getElementById('pros-count');
+  if(cel)cel.textContent=nc>0?nc+' nuevo(s) sin revisar':'';
+  var html='';
+  if(!filtered.length){
+    html='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No hay prospectos todavía.<br><span style="font-size:11px">Los formularios enviados desde la web aparecerán aquí.</span></td></tr>';
+  } else {
+    filtered.forEach(function(p){
+      var fecha=p.created_at?p.created_at.slice(0,10):'-';
+      html+='<tr>'+
+        '<td style="font-size:11px;color:var(--text3)">'+fecha+'</td>'+
+        '<td style="font-weight:600">'+(p.nombre||'-')+(p.revisado?'':'<span class="new-badge" style="margin-left:4px">NUEVO</span>')+'</td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+(p.empresa||'-')+'</td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+(p.rut||'-')+'</td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+(p.email||'-')+'</td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+(p.celular||'-')+'</td>'+
+        '<td style="font-size:11px;color:var(--text2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.comentario||'-')+'</td>'+
+        '<td>'+(p.revisado?'<span style="color:var(--text3);font-size:11px">Revisado</span>':'<span style="color:var(--green);font-size:11px">● Nuevo</span>')+'</td>'+
+        '<td style="display:flex;gap:6px">'+
+          '<button class="btn btn-primary btn-sm" onclick="openConvertProspect('+p.id+')">🎯 Convertir</button>'+
+          (!p.revisado?'<button class="btn btn-secondary btn-sm" onclick="markReviewed('+p.id+')">✓</button>':'')+
+        '</td>'+
+        '</tr>';
+    });
+  }
+  document.getElementById('pros-tbody').innerHTML=html;
+}
+
+function openConvertProspect(id){
+  var p=null;for(var i=0;i<prospects.length;i++){if(prospects[i].id===id){p=prospects[i];break;}}if(!p)return;
+  convertingId=id;
+  document.getElementById('pf-cliente').value=(p.nombre||'').toUpperCase();
+  document.getElementById('pf-empresa').value=p.empresa||'';
+  document.getElementById('pf-rut').value=p.rut||'';
+  document.getElementById('pf-celular').value=p.celular||'';
+  document.getElementById('pf-email').value=p.email||'';
+  document.getElementById('pf-monto').value='';
+  document.getElementById('pf-comentario').value=p.comentario||'';
+  document.getElementById('modal-prospect').classList.add('show');
+}
+
+async function convertProspect(){
+  var cliente=document.getElementById('pf-cliente').value.trim();
+  if(!cliente){alert('Ingresa el nombre del cliente');return;}
+  setSyncState('loading','Guardando...');
+  var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('pf-empresa').value,rut:document.getElementById('pf-rut').value,celular:document.getElementById('pf-celular').value,email:document.getElementById('pf-email').value,canal:document.getElementById('pf-canal').value,cat:document.getElementById('pf-cat').value,fuente:'Formulario Web',resp:document.getElementById('pf-resp').value,monto:parseFloat(document.getElementById('pf-monto').value)||0,estado:'Contactado',lifetime:0,fecha_creado:today(),fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('pf-comentario').value,next_action:'',next_date:null,razon_perdida:''});
+  if(Array.isArray(rows)&&rows[0])await sbPost('history',{deal_id:rows[0].id,fecha:today(),texto:'Trato creado desde formulario web'});
+  if(convertingId)await sbPatch('prospects',convertingId,{revisado:true});
+  await loadAll();setSyncState('ok','Conectado');showToast('✅ Prospecto convertido a trato');closeModal('modal-prospect');showPage('deals');
+}
+
+async function markReviewed(id){
+  await sbPatch('prospects',id,{revisado:true});await loadAll();renderProspects();showToast('✓ Marcado como revisado');
+}
+
+function globalSearch(q){
+  if(!q||q.length<2){hideGlobalResults();return;}
+  var ql=q.toLowerCase();
+  var res=deals.filter(function(d){return d.cliente.toLowerCase().includes(ql)||(d.empresa||'').toLowerCase().includes(ql)||(d.rut||'').toLowerCase().includes(ql);});
+  var el=document.getElementById('search-results');
+  if(!res.length){el.innerHTML='<div class="sr-item" style="color:var(--text3)">Sin resultados</div>';el.classList.add('show');return;}
+  var html='';var shown=res.slice(0,8);
+  for(var i=0;i<shown.length;i++){var d=shown[i];html+='<div class="sr-item" onclick="openEdit('+d.id+');hideGlobalResults()"><div><span style="font-weight:600;color:var(--accent)">'+d.cliente+'</span>'+(d.empresa?' <span style="color:var(--text3);font-size:11px">· '+d.empresa+'</span>':'')+'</div><div style="display:flex;gap:6px;align-items:center"><span class="badge '+badgeClass(d.estado)+'">'+d.estado+'</span><span style="color:var(--text3);font-size:10px">'+d.resp+'</span></div></div>';}
+  el.innerHTML=html;el.classList.add('show');
+}
+function hideGlobalResults(){document.getElementById('search-results').classList.remove('show');}
+
+function clienteSuggest(q){
+  var el=document.getElementById('cliente-suggest');
+  if(!q||q.length<2){el.style.display='none';return;}
+  var ql=q.toLowerCase(),seen={},matches=[];
+  deals.forEach(function(d){if(!seen[d.cliente]&&d.cliente.toLowerCase().includes(ql)){seen[d.cliente]=true;matches.push(d);}});
+  if(!matches.length){el.style.display='none';return;}
+  el.innerHTML=matches.slice(0,6).map(function(d){return '<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px" onmousedown="fillCliente('+d.id+')"><span style="font-weight:600;color:var(--accent)">'+d.cliente+'</span>'+(d.empresa?' <span style="color:var(--text3)">· '+d.empresa+'</span>':'')+(d.cat?' <span style="color:var(--text3);font-size:10px">· '+d.cat+'</span>':'')+'</div>';}).join('');
+  el.style.display='block';
+}
+function fillCliente(id){
+  var d=null;for(var i=0;i<deals.length;i++){if(deals[i].id===id){d=deals[i];break;}}if(!d)return;
+  document.getElementById('nf-cliente').value=d.cliente;
+  document.getElementById('nf-empresa').value=d.empresa||'';
+  document.getElementById('nf-rut').value=d.rut||'';
+  document.getElementById('nf-celular').value=d.celular||'';
+  document.getElementById('nf-email').value=d.email||'';
+  document.getElementById('nf-cat').value=d.cat||'Hotel';
+  hideClienteSuggest();
+}
+function hideClienteSuggest(){var el=document.getElementById('cliente-suggest');if(el)el.style.display='none';}
+
+function resetNewForm(){
+  ['nf-cliente','nf-empresa','nf-rut','nf-celular','nf-email','nf-monto','nf-comentario','nf-next'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('nf-fecha').value=today();
+  document.getElementById('nf-nextdate').value='';
+}
+
+async function saveDeal(){
+  var cliente=document.getElementById('nf-cliente').value.trim();
+  if(!cliente){alert('Ingresa el nombre del cliente');return;}
+  var estado=document.getElementById('nf-estado').value;
+  setSyncState('loading','Guardando...');
+  var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('nf-empresa').value,rut:document.getElementById('nf-rut').value,celular:document.getElementById('nf-celular').value,email:document.getElementById('nf-email').value,canal:document.getElementById('nf-canal').value,cat:document.getElementById('nf-cat').value,fuente:document.getElementById('nf-fuente').value,resp:document.getElementById('nf-resp').value,monto:parseFloat(document.getElementById('nf-monto').value)||0,estado:estado,lifetime:0,fecha_creado:document.getElementById('nf-fecha').value||null,fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('nf-comentario').value,next_action:document.getElementById('nf-next').value,next_date:document.getElementById('nf-nextdate').value||null,razon_perdida:''});
+  if(Array.isArray(rows)&&rows[0])await sbPost('history',{deal_id:rows[0].id,fecha:today(),texto:'Trato creado · '+estado});
+  await loadAll();setSyncState('ok','Conectado');showToast('✅ Trato creado');showPage('deals');
+}
+
+function selReason(el,r){document.querySelectorAll('.reason-btn').forEach(function(b){b.classList.remove('sel');});el.classList.add('sel');selReason_val=r;}
+
+async function confirmLoss(){
+  if(!selReason_val){alert('Selecciona una razón de pérdida');return;}
+  var d=null;for(var i=0;i<deals.length;i++){if(deals[i].id===pendingLossId){d=deals[i];break;}}if(!d)return;
+  setSyncState('loading','Guardando...');
+  var comment=document.getElementById('loss-comment').value;
+  await sbPatch('deals',d.id,{estado:'Trato perdido',razon_perdida:selReason_val,fecha_perdido:today(),comentario:comment?(d.comentario?d.comentario+' | ':'')+comment:d.comentario});
+  await sbPost('history',{deal_id:d.id,fecha:today(),texto:'→ Trato perdido · '+selReason_val});
+  await loadAll();setSyncState('ok','Conectado');showToast('Trato marcado como perdido');
+  document.getElementById('loss-comment').value='';closeModal('modal-loss');renderFunnel();renderDealsTable();
 }
 
 function exportExcel(){
-  if(!items.length){showMsg('Agrega al menos un producto.','err');return;}
-  if(typeof XLSX==='undefined'){showMsg('Librería Excel cargando, intenta en unos segundos.','err');return;}
-  const rows=[['SKU','Cantidad','Precio Neto']];
-  items.forEach(it=>rows.push([it.s,it.q,it.p]));
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:20},{wch:12},{wch:14}];
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Orden');
-  XLSX.writeFile(wb,'Orden_Atakama_'+document.getElementById('cotNum').value+'.xlsx');
-  showMsg('Excel descargado correctamente.','ok');
+  var sorted=deals.slice().sort(function(a,b){if(!a.fecha_creado&&!b.fecha_creado)return a.id-b.id;if(!a.fecha_creado)return 1;if(!b.fecha_creado)return -1;return new Date(a.fecha_creado)-new Date(b.fecha_creado);});
+  var rows=[['#','Cliente','Empresa','RUT','Celular','Email','Canal','Categoría','Responsable','Fuente','Monto','Estado','Fecha Creado','Fecha Ganado','Fecha Perdido','Lifetime (días)','Razón Pérdida','Próxima Acción','Comentario']];
+  for(var i=0;i<sorted.length;i++){var d=sorted[i];rows.push([d.id,d.cliente,d.empresa||'',d.rut||'',d.celular||'',d.email||'',d.canal,d.cat||'',d.resp,d.fuente||'',Number(d.monto)||0,d.estado,d.fecha_creado||'',d.fecha_ganado||'',d.fecha_perdido||'',d.lifetime||0,d.razon_perdida||'',d.next_action||'',d.comentario||'']);}
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[6,25,20,14,14,25,12,18,10,16,14,18,13,13,13,8,20,25,30].map(function(w){return{wch:w};});
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Tratos');
+  XLSX.writeFile(wb,'Atakama_CRM_'+today()+'.xlsx');
 }
 
-function loadMassive(input){
-  if(!input.files.length)return;
-  const file=input.files[0];
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const wb=XLSX.read(e.target.result,{type:'binary'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      if(rows.length<2){showMsg('El archivo está vacío.','err');return;}
-      // Detectar columnas por encabezado
-      const headers=rows[0].map(h=>String(h).toLowerCase().trim());
-      const iSku=headers.findIndex(h=>h.includes('sku')||h.includes('código')||h.includes('codigo'));
-      const iQty=headers.findIndex(h=>h.includes('cantidad')||h.includes('qty')||h.includes('cant'));
-      const iPrc=headers.findIndex(h=>h.includes('precio')||h.includes('price')||h.includes('neto'));
-      if(iSku<0){showMsg('No se encontró columna SKU.','err');return;}
-      let added=0,notFound=[];
-      rows.slice(1).forEach(row=>{
-        const sku=String(row[iSku]||'').trim();
-        if(!sku)return;
-        const qty=Math.max(1,parseInt(row[iQty])||1);
-        const prc=parseInt(row[iPrc])||null;
-        const prod=P.find(p=>p.s.toLowerCase()===sku.toLowerCase());
-        const ex=items.find(i=>i.s.toLowerCase()===sku.toLowerCase());
-        if(prod){
-          if(ex){ex.q+=qty;if(prc)ex.p=prc;}
-          else items.push({s:prod.s,n:prod.n,p:prc||prod.p,q:qty});
-          added++;
-        } else {
-          // SKU no está en el maestro, igual lo agrega con nombre del Excel si existe
-          if(ex){ex.q+=qty;if(prc)ex.p=prc;}
-          else items.push({s:sku,n:sku,p:prc||0,q:qty});
-          added++;notFound.push(sku);
-        }
-      });
-      renderTable();recalc();
-      input.value='';
-      let msg=added+' producto(s) cargado(s).';
-      if(notFound.length) msg+=' SKUs no encontrados en maestro: '+notFound.join(', ');
-      showMsg(msg, notFound.length?'err':'ok');
-    }catch(err){showMsg('Error al leer el archivo: '+err.message,'err');}
-  };
-  reader.readAsBinaryString(file);
-}
-  if(!items.length){showMsg('Agrega al menos un producto.','err');return;}
-  const disc=parseFloat(document.getElementById('discount').value)||0;
-  const sub=items.reduce((s,it)=>s+it.p*it.q,0);
-  const net=sub*(1-disc/100);
-  const total=Math.round(net*1.19);
-  const cotN=document.getElementById('cotNum').value;
-  const penUrl='https://codepen.io/Ignacio-Aguilera-the-sans/pen/YPGrZWM?cot='+cotN;
-  window.history.replaceState({},'','?cot='+cotN);
-  const row={
-    cotizacion:cotN,
-    fecha:document.getElementById('fecha').value||new Date().toLocaleDateString('es-CL'),
-    empresa:document.getElementById('empresa').value||'—',
-    rut:document.getElementById('rut').value||'—',
-    contacto:document.getElementById('contacto').value||'—',
-    descuento:disc,
-    total:total,
-    link:penUrl
-  };
-  const params=new URLSearchParams(row);
-  const img=new Image();
-  img.src=SHEETS_URL+'?'+params.toString();
-  setTimeout(()=>showMsg('✓ Guardado. Link: '+penUrl,'ok'),1500);
-}
-
-async function loadFromUrl(){
-  const params=new URLSearchParams(window.location.search);
-  const cot=params.get('cot');
-  if(!cot)return false;
-  const local=localStorage.getItem('cot_'+cot);
-  if(local){
-    try{
-      const data=JSON.parse(local);
-      document.getElementById('cotNum').value=data.cotizacion;
-      document.getElementById('fecha').value=data.fecha;
-      document.getElementById('empresa').value=data.empresa;
-      document.getElementById('rut').value=data.rut||'';
-      document.getElementById('contacto').value=data.contacto||'';
-      document.getElementById('discount').value=data.descuento||0;
-      items=JSON.parse(data.productos||'[]');
-      updateLbl();renderTable();recalc();
-      showMsg('Cotización N° '+cot+' cargada.','ok');
-      return true;
-    }catch(e){}
-  }
-  try{
-    const res=await fetch(SHEETS_URL+'?action=load&cotizacion='+cot);
-    const data=await res.json();
-    if(data.status==='OK'){
-      document.getElementById('cotNum').value=data.cotizacion;
-      document.getElementById('fecha').value=data.fecha;
-      document.getElementById('empresa').value=data.empresa;
-      document.getElementById('rut').value=data.rut||'';
-      document.getElementById('contacto').value=data.contacto||'';
-      document.getElementById('discount').value=data.descuento||0;
-      updateLbl();renderTable();recalc();
-      showMsg('Cotización N° '+cot+' cargada.','ok');
-      return true;
-    }
-  }catch(e){}
-  return false;
-}
-
-async function makePDF(){
-  if(!items.length){showMsg('Agrega al menos un producto.','err');return;}
-  try{
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF({unit:'mm',format:'letter'});
-    const W=215.9,M=18;
-    const logoImg=new Image();
-    logoImg.crossOrigin='anonymous';
-    logoImg.src='https://i.imgur.com/26BHPj5.png';
-    await new Promise(r=>{logoImg.onload=r;logoImg.onerror=r;});
-    if(logoImg.complete&&logoImg.naturalWidth>0){
-      const c=document.createElement('canvas');
-      c.width=logoImg.naturalWidth;c.height=logoImg.naturalHeight;
-      c.getContext('2d').drawImage(logoImg,0,0);
-      doc.addImage(c.toDataURL('image/png'),'PNG',M,8,65,16);
-    }
-    doc.setDrawColor(200,200,200);doc.setLineWidth(0.3);
-    doc.line(M,28,W-M,28);
-    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(26,26,26);
-    const cotN=document.getElementById('cotNum').value||'—';
-    doc.text('COTIZACIÓN N° '+cotN,W/2,38,{align:'center'});
-    doc.line(M,42,W-M,42);
-    const fecha=document.getElementById('fecha').value||new Date().toLocaleDateString('es-CL');
-    [['Fecha',fecha],['Empresa',document.getElementById('empresa').value||'—'],['RUT',document.getElementById('rut').value||'—'],['Contacto',document.getElementById('contacto').value||'—']].forEach((f,i)=>{
-      const y=50+i*7;
-      doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(f[0],M,y);
-      doc.setTextColor(26,26,26);doc.text(f[1],56,y);
-    });
-    doc.line(M,80,W-M,80);
-    const disc=parseFloat(document.getElementById('discount').value)||0;
-    doc.autoTable({
-      startY:84,
-      head:[['Código','Descripción','Cantidad','Precio Neto desc.','Total Neto']],
-      body:items.map(it=>[it.s,it.n.length>46?it.n.substring(0,44)+'…':it.n,String(it.q),fmt(it.p),fmt(it.p*it.q)]),
-      margin:{left:M,right:M},
-      styles:{fontSize:8,cellPadding:2.5,textColor:[26,26,26]},
-      headStyles:{fillColor:[26,26,26],textColor:[255,255,255],fontStyle:'bold',fontSize:8},
-      columnStyles:{0:{cellWidth:28},1:{cellWidth:76},2:{cellWidth:20,halign:'center'},3:{cellWidth:34,halign:'right'},4:{cellWidth:30,halign:'right'}},
-      alternateRowStyles:{fillColor:[249,249,249]}
-    });
-    const fy=doc.lastAutoTable.finalY+8;
-    const sub=items.reduce((s,it)=>s+it.p*it.q,0);
-    const da=sub*(disc/100);
-    const net=sub-da;
-    const iva=net*0.19;
-    const tx=W-M;
-    const rows=disc>0?[['Subtotal neto',fmt(sub)],['Descuento ('+disc+'%)','-'+fmt(da)],['Valor neto',fmt(net)],['IVA 19%',fmt(iva)]]:[['Valor neto',fmt(net)],['IVA 19%',fmt(iva)]];
-    rows.forEach((r,i)=>{
-      const y=fy+i*7;
-      doc.setFontSize(9);doc.setFont('helvetica','normal');
-      doc.setTextColor(100,100,100);doc.text(r[0],tx-55,y);
-      if(r[0].startsWith('Desc'))doc.setTextColor(163,45,45);else doc.setTextColor(26,26,26);
-      doc.text(r[1],tx,y,{align:'right'});
-    });
-    const ly=fy+rows.length*7;
-    doc.setDrawColor(200,200,200);doc.line(tx-58,ly-2,tx,ly-2);
-    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(26,26,26);
-    doc.text('Total',tx-55,ly+4);doc.text(fmt(net+iva),tx,ly+4,{align:'right'});
-    const footY=Math.max(ly+18,230);
-    doc.setLineWidth(0.3);doc.line(M,footY,W-M,footY);
-    doc.setFontSize(8);doc.setFont('helvetica','normal');
-    [['Razón Social','ATAKAMA OUTDOOR SPA'],['RUT','76.475.772-6'],['Dirección','Tabancura 1482, Vitacura'],['Teléfono','56 9 9073 2022'],['Mail','hola@atakamaoutdoor.cl'],['Página Web','www.atakamaoutdoor.cl'],['Banco','Banco de Chile'],['Cuenta Corriente','8001210508']].forEach((r,i)=>{
-      const y=footY+6+i*5;
-      doc.setTextColor(110,110,110);doc.text(r[0],M,y);
-      doc.setTextColor(26,26,26);doc.text(r[1],56,y);
-    });
-    doc.save('Cotizacion_Atakama_'+cotN+'.pdf');
-    showMsg('PDF descargado correctamente.','ok');
-  }catch(e){showMsg('Error: '+e.message,'err');}
-}
-
-document.getElementById('fecha').value=new Date().toISOString().split('T')[0];
-(async()=>{
-  const loaded=await loadFromUrl();
-  if(!loaded){
-    const next=await getNextCotNumber();
-    document.getElementById('cotNum').value=next;
-    updateLbl();
-  }
-  recalc();
-})();
+init();
 </script>
 </body>
 </html>
