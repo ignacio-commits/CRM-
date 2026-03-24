@@ -224,7 +224,11 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
   <div class="page-sub">Ingresa los datos del trato</div>
   <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px;max-width:640px">
     <div class="form-grid">
-      <div class="form-group full"><label>Nombre del Cliente *</label><input type="text" id="nf-cliente"></div>
+      <div class="form-group full" style="position:relative">
+        <label>Nombre del Cliente *</label>
+        <input type="text" id="nf-cliente" autocomplete="off" oninput="clienteSuggest(this.value)" onblur="setTimeout(hideClienteSuggest,200)">
+        <div id="cliente-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:6px;z-index:50;max-height:200px;overflow-y:auto"></div>
+      </div>
       <div class="form-group full"><label>Empresa</label><input type="text" id="nf-empresa"></div>
       <div class="form-group"><label>RUT</label><input type="text" id="nf-rut" placeholder="76.xxx.xxx-x"></div>
       <div class="form-group"><label>Celular</label><input type="text" id="nf-celular" placeholder="+56 9 xxxx xxxx"></div>
@@ -720,6 +724,49 @@ function globalSearch(q) {
   el.innerHTML=html; el.classList.add('show');
 }
 function hideGlobalResults(){document.getElementById('search-results').classList.remove('show');}
+
+function clienteSuggest(q) {
+  var el = document.getElementById('cliente-suggest');
+  if (!q || q.length < 2) { el.style.display = 'none'; return; }
+  var ql = q.toLowerCase();
+  // Buscar clientes únicos existentes
+  var seen = {};
+  var matches = [];
+  deals.forEach(function(d) {
+    if (!seen[d.cliente] && d.cliente.toLowerCase().includes(ql)) {
+      seen[d.cliente] = true;
+      matches.push(d);
+    }
+  });
+  if (!matches.length) { el.style.display = 'none'; return; }
+  el.innerHTML = matches.slice(0, 6).map(function(d) {
+    return '<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px" ' +
+      'onmousedown="fillCliente(' + d.id + ')">' +
+      '<span style="font-weight:600;color:var(--accent)">' + d.cliente + '</span>' +
+      (d.empresa ? ' <span style="color:var(--text3)">· ' + d.empresa + '</span>' : '') +
+      (d.cat ? ' <span style="color:var(--text3);font-size:10px">· ' + d.cat + '</span>' : '') +
+      '</div>';
+  }).join('');
+  el.style.display = 'block';
+}
+
+function fillCliente(id) {
+  var d = null;
+  for (var i = 0; i < deals.length; i++) { if (deals[i].id === id) { d = deals[i]; break; } }
+  if (!d) return;
+  document.getElementById('nf-cliente').value = d.cliente;
+  document.getElementById('nf-empresa').value = d.empresa || '';
+  document.getElementById('nf-rut').value = d.rut || '';
+  document.getElementById('nf-celular').value = d.celular || '';
+  document.getElementById('nf-email').value = d.email || '';
+  document.getElementById('nf-cat').value = d.cat || 'Hotel';
+  hideClienteSuggest();
+}
+
+function hideClienteSuggest() {
+  var el = document.getElementById('cliente-suggest');
+  if (el) el.style.display = 'none';
+}
 
 function resetNewForm() {
   ['nf-cliente','nf-empresa','nf-rut','nf-celular','nf-email','nf-monto','nf-comentario','nf-next'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
