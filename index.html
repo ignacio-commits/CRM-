@@ -260,4 +260,510 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
       <div class="form-group"><label>Celular</label><input type="text" id="ef-celular"></div>
       <div class="form-group full"><label>Email</label><input type="text" id="ef-email"></div>
       <div class="form-group"><label>Canal</label><select id="ef-canal"><option>Corporativo</option><option>WS</option></select></div>
-      <div class="form-group"><label>Categoría</label><select id="ef-cat"><option value="">Sin categoría</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía
+      <div class="form-group"><label>Categoría</label><select id="ef-cat"><option value="">Sin categoría</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
+      <div class="form-group"><label>Responsable</label><select id="ef-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
+      <div class="form-group"><label>Canal de Fuente</label><select id="ef-fuente"><option value="">Sin especificar</option><option>Cliente Antiguo</option><option>Prospecto</option><option>Correo Atakama</option><option>Referido</option></select></div>
+    </div>
+    <div class="esection">Estado y valores</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Estado</label><select id="ef-estado"><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option><option>Trato ganado</option><option>Trato perdido</option></select></div>
+      <div class="form-group"><label>Monto ($)</label><input type="number" id="ef-monto"></div>
+      <div class="form-group"><label>Fecha Creado</label><input type="date" id="ef-fechaCreado"></div>
+      <div class="form-group"><label>Fecha Ganado</label><input type="date" id="ef-fechaGanado"></div>
+      <div class="form-group"><label>Razón Pérdida</label><select id="ef-razon"><option value="">-</option><option>Proveedor alternativo</option><option>Desiste de la compra</option><option>Solo cotiza</option><option>Falta de stock</option><option>Precio muy alto</option><option>Sin respuesta</option></select></div>
+    </div>
+    <div class="esection">Seguimiento</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Próxima Acción</label><input type="text" id="ef-next"></div>
+      <div class="form-group"><label>Fecha Próxima Acción</label><input type="date" id="ef-nextdate"></div>
+      <div class="form-group full"><label>Comentario</label><textarea id="ef-comentario"></textarea></div>
+    </div>
+    <div class="esection">Historial de actividad</div>
+    <div id="ef-history"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit')">Cancelar</button>
+      <button class="btn btn-danger btn-sm" id="ef-del-btn">🗑 Eliminar</button>
+      <button class="btn btn-success btn-sm" onclick="saveEdit()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PÉRDIDA -->
+<div class="modal-bg" id="modal-loss">
+  <div class="modal" style="width:420px">
+    <h2>¿Por qué se perdió el trato?</h2>
+    <div class="loss-reasons">
+      <div class="reason-btn" onclick="selReason(this,'Proveedor alternativo')">🏪 Proveedor alternativo</div>
+      <div class="reason-btn" onclick="selReason(this,'Desiste de la compra')">❌ Desiste de la compra</div>
+      <div class="reason-btn" onclick="selReason(this,'Solo cotiza')">📋 Solo cotiza</div>
+      <div class="reason-btn" onclick="selReason(this,'Falta de stock')">📦 Falta de stock</div>
+      <div class="reason-btn" onclick="selReason(this,'Precio muy alto')">💸 Precio muy alto</div>
+      <div class="reason-btn" onclick="selReason(this,'Sin respuesta')">👻 Sin respuesta</div>
+    </div>
+    <div class="form-group"><label>Comentario adicional</label><textarea id="loss-comment"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-loss')">Cancelar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmLoss()">Marcar como Perdido</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var SB_URL = 'https://popzkkhsdkjuwlbveekg.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvcHpra2hzZGtqdXdsYnZlZWtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDc5NzIsImV4cCI6MjA4OTg4Mzk3Mn0.dhmo2Kzbcer8BpBKuc0nborN6Jmm1OgIHlYe05jGf6o';
+var STALE_DAYS = 3;
+var PIE_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#f97316','#22c55e','#ef4444','#06b6d4','#ec4899','#84cc16'];
+var deals = [], historyMap = {}, selectedReason = '', pendingLossId = null, editingId = null, charts = {}, dragId = null, dragActive = false;
+
+function sbH() { return {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}; }
+async function sbGet(t,p) { var r=await fetch(SB_URL+'/rest/v1/'+t+'?'+(p||''),{headers:sbH()}); return r.json(); }
+async function sbPost(t,b) { var r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify(b)}); return r.json(); }
+async function sbPatch(t,id,b) { var r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:Object.assign({},sbH(),{'Prefer':'return=representation'}),body:JSON.stringify(b)}); return r.json(); }
+async function sbDelete(t,id) { await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:sbH()}); }
+
+var SEED = [
+  {cliente:'TANAX',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:3000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BUIN ZOO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Organización',fuente:'',resp:'Balta',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'EXPLORA TOALLAS',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Cliente Antiguo',resp:'Balta',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CCU REGALO FIN DE AÑO',empresa:'CCU S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'VINCI COMPASS',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'',resp:'Balta',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Conseguir mail',next_date:null,razon_perdida:''},
+  {cliente:'EXPLORA PANTUFLAS',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Cliente Antiguo',resp:'Balta',monto:20000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BUK',empresa:'BUK S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'RRHH',fuente:'Cliente Antiguo',resp:'Balta',monto:30000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BCI',empresa:'Banco BCI',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'',resp:'Balta',monto:34000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ENEX PROMO GRANDE VERANO',empresa:'ENEX S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Energía',fuente:'Cliente Antiguo',resp:'Balta',monto:150000000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Espera cotización proveedores',next_date:null,razon_perdida:''},
+  {cliente:'ENEX REGALO CORPORATIVO',empresa:'ENEX S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Energía',fuente:'Cliente Antiguo',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'CONCHA Y TORO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Viña',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ARIZTIA',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'',resp:'Balta',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'HOTEL HANGA ROA',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:312827,estado:'Trato ganado',lifetime:7,fecha_creado:'2026-03-12',fecha_ganado:'2026-03-19',fecha_perdido:null,comentario:'Despachar a cliente',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'ISABEL VIAL',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Persona Natural',fuente:'Referido',resp:'Ignacio',monto:231139,estado:'Trato ganado',lifetime:3,fecha_creado:'2026-03-13',fecha_ganado:'2026-03-16',fecha_perdido:null,comentario:'Despachar a cliente',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'DESTINORIENTE',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Correo Atakama',resp:'Ignacio',monto:1990750,estado:'Trato ganado',lifetime:1,fecha_creado:'2026-02-25',fecha_ganado:'2026-02-26',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'BEYOND',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:375433,estado:'Trato ganado',lifetime:6,fecha_creado:'2026-02-26',fecha_ganado:'2026-03-04',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'DISCOVERYMERCH',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Marketing',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Reunión Martes 24/03',next_date:'2026-03-24',razon_perdida:''},
+  {cliente:'GEOTERRA VIAJES',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Posibilidad equipar guías',next_date:null,razon_perdida:''},
+  {cliente:'YPO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Organización',fuente:'Correo Atakama',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Seguimiento compra',next_date:null,razon_perdida:''},
+  {cliente:'BOMBEROS DE SANTIAGO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Organización',fuente:'Correo Atakama',resp:'Ignacio',monto:2800000,estado:'Trato perdido',lifetime:1,fecha_creado:'2026-03-16',fecha_ganado:null,fecha_perdido:'2026-03-17',comentario:'No quiso mochila',next_action:'',next_date:null,razon_perdida:'Desiste de la compra'},
+  {cliente:'HOTEL TERMAS DE CHILLÁN',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Hotel',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Conv. encargado bodega',next_date:null,razon_perdida:''},
+  {cliente:'BUK (Ignacio)',empresa:'BUK S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'RRHH',fuente:'Cliente Antiguo',resp:'Ignacio',monto:1062718,estado:'Trato ganado',lifetime:4,fecha_creado:'2026-03-05',fecha_ganado:'2026-03-09',fecha_perdido:null,comentario:'Entregado',next_action:'Esperar chaquetas venta 2',next_date:null,razon_perdida:''},
+  {cliente:'CCU (ROYAL)',empresa:'CCU S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'Cliente Antiguo',resp:'Ignacio',monto:3600000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-17',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Evaluando compra',next_date:null,razon_perdida:''},
+  {cliente:'CHILENATIVO',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Despachar muestras',next_date:null,razon_perdida:''},
+  {cliente:'BIZAGRA',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Marketing',fuente:'Correo Atakama',resp:'Ignacio',monto:410550,estado:'Trato ganado',lifetime:1,fecha_creado:'2026-03-03',fecha_ganado:'2026-03-04',fecha_perdido:null,comentario:'Entregado',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'RIA MT',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'Correo Atakama',resp:'Ignacio',monto:1195831,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-18',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando aprobación RRHH',next_date:null,razon_perdida:''},
+  {cliente:'MASTERCARD',empresa:'Mastercard Inc.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Banco',fuente:'Correo Atakama',resp:'Ignacio',monto:928345,estado:'Trato perdido',lifetime:1,fecha_creado:'2026-03-12',fecha_ganado:null,fecha_perdido:'2026-03-13',comentario:'No aprueban presupuesto',next_action:'',next_date:null,razon_perdida:'Precio muy alto'},
+  {cliente:'CHIPAX',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Logística',fuente:'Correo Atakama',resp:'Ignacio',monto:2407510,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-13',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Compra segundo semestre',next_date:null,razon_perdida:''},
+  {cliente:'CCU',empresa:'CCU S.A.',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Consumo Masivo',fuente:'Cliente Antiguo',resp:'Ignacio',monto:952992,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-11',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando stock chaqueta',next_date:null,razon_perdida:''},
+  {cliente:'ERMITAÑO EXPEDICIONES',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Prospecto',resp:'Ignacio',monto:0,estado:'Catálogo enviado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'TUR COPEC',empresa:'',rut:'',celular:'',email:'',canal:'Corporativo',cat:'Operador Turístico',fuente:'Correo Atakama',resp:'Ignacio',monto:330000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-20',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'HOTEL CASCADAS',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'Hotel',fuente:'',resp:'Ignacio',monto:2500000,estado:'Cotización enviada',lifetime:0,fecha_creado:'2026-03-13',fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Esperando OC',next_date:null,razon_perdida:''},
+  {cliente:'PLAYARTE MATANZA',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:653653,estado:'Trato ganado',lifetime:5,fecha_creado:'2026-03-12',fecha_ganado:'2026-03-17',fecha_perdido:null,comentario:'',next_action:'Enviar stock pantuflas flex',next_date:null,razon_perdida:''},
+  {cliente:'CHELECH',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:16000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'8 en marzo, 8 en abril',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'TIENDA PORVENIR',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:3043542,estado:'Trato ganado',lifetime:4,fecha_creado:'2026-03-09',fecha_ganado:'2026-03-13',fecha_perdido:null,comentario:'',next_action:'',next_date:null,razon_perdida:''},
+  {cliente:'TRAVEL CLUB',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:4000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'BRAVIUM',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:10000000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'INDUSMAT',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:3062000,estado:'Cotización enviada',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'CASA ALICIA',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Tomás',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''},
+  {cliente:'TERRAOUTDOOR',empresa:'',rut:'',celular:'',email:'',canal:'WS',cat:'',fuente:'',resp:'Ignacio',monto:0,estado:'Contactado',lifetime:0,fecha_creado:null,fecha_ganado:null,fecha_perdido:null,comentario:'',next_action:'Preparar sugerido',next_date:null,razon_perdida:''}
+];
+
+function today() { return new Date().toISOString().slice(0,10); }
+function fmt(n) { return Number(n)>0 ? '$'+Number(n).toLocaleString('es-CL') : '-'; }
+function daysAgo(d) { if(!d) return 999; return Math.round((new Date()-new Date(d))/86400000); }
+function calcLifetime(c,e) { if(!c||!e) return 0; return Math.max(0,Math.round((new Date(e)-new Date(c))/86400000)); }
+function badgeClass(s) { return {'Cotización enviada':'badge-cot','Catálogo enviado':'badge-cat','Trato ganado':'badge-gan','Trato perdido':'badge-per','Negociación':'badge-neg','Contactado':'badge-con'}[s]||'badge-con'; }
+function isStale(d) {
+  if(d.estado==='Trato ganado'||d.estado==='Trato perdido') return false;
+  var h=historyMap[d.id]||[], last=h.length?h[h.length-1].fecha:d.fecha_creado;
+  return daysAgo(last)>=STALE_DAYS;
+}
+function setSyncState(s,l) { document.getElementById('sync-dot').className='sync-dot'+(s==='error'?' error':s==='loading'?' loading':''); document.getElementById('sync-label').textContent=l; }
+function showToast(m) { var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2500); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function destroyChart(id) { if(charts[id]){charts[id].destroy();charts[id]=null;} }
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('page-'+p).classList.add('active');
+  var nm={dashboard:0,funnel:1,deals:2,clients:3,new:5};
+  if(nm[p]!==undefined) document.querySelectorAll('.nav-item')[nm[p]].classList.add('active');
+  if(p==='dashboard') renderDashboard();
+  if(p==='funnel') renderFunnel();
+  if(p==='deals') renderDealsTable();
+  if(p==='clients') renderClientsTable();
+  if(p==='new') resetNewForm();
+}
+
+async function init() {
+  setSyncState('loading','Conectando...');
+  try {
+    var ex=await sbGet('deals','select=id&limit=1');
+    if(!Array.isArray(ex)||ex.length===0) {
+      showToast('Primera carga: migrando datos...');
+      for(var i=0;i<SEED.length;i++) {
+        var rows=await sbPost('deals',SEED[i]);
+        if(Array.isArray(rows)&&rows[0]) await sbPost('history',{deal_id:rows[0].id,fecha:rows[0].fecha_creado||today(),texto:'Trato creado · '+rows[0].estado});
+      }
+    }
+    await loadAll();
+    setSyncState('ok','Conectado');
+    document.getElementById('loading-overlay').style.display='none';
+    renderDashboard();
+  } catch(e) {
+    setSyncState('error','Sin conexión');
+    document.getElementById('loading-overlay').innerHTML='<div style="text-align:center;color:#ef4444;padding:20px"><div style="font-size:32px">⚠️</div><div style="margin-top:8px">Error conectando</div><div style="font-size:11px;color:#64748b;margin-top:4px">'+e.message+'</div></div>';
+  }
+}
+
+async function loadAll() {
+  var res=await Promise.all([sbGet('deals','select=*&order=fecha_creado.desc.nullslast'),sbGet('history','select=*&order=created_at.asc')]);
+  deals=res[0]; historyMap={};
+  res[1].forEach(function(h){if(!historyMap[h.deal_id])historyMap[h.deal_id]=[];historyMap[h.deal_id].push(h);});
+}
+
+// PIE CHART
+var pctPlugin={id:'pctLabels',afterDatasetsDraw:function(chart){
+  var ctx=chart.ctx, ds=chart.data.datasets[0];
+  var total=ds.data.reduce(function(a,b){return a+b;},0);
+  chart.getDatasetMeta(0).data.forEach(function(arc,i){
+    var val=ds.data[i]; if(!val) return;
+    var pct=Math.round(val/total*100); if(pct<6) return;
+    var pos=arc.tooltipPosition();
+    ctx.save(); ctx.fillStyle='#fff'; ctx.font='bold 10px Segoe UI';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=4;
+    ctx.fillText(pct+'%',pos.x,pos.y); ctx.restore();
+  });
+}};
+
+function makePieChart(id,labels,data) {
+  destroyChart(id);
+  var total=data.reduce(function(a,b){return a+b;},0);
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels:labels,datasets:[{data:data,backgroundColor:PIE_COLORS.slice(0,labels.length),borderWidth:2,borderColor:'#1e2535'}]},
+    options:{cutout:'46%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:6}},tooltip:{callbacks:{label:function(ctx){var pct=total?Math.round(ctx.raw/total*100):0;return ' '+ctx.label+': '+ctx.raw+' ('+pct+'%)';}}}},layout:{padding:4}},
+    plugins:[pctPlugin]
+  });
+}
+
+function getFiltered() {
+  var canal=(document.getElementById('db-canal')||{}).value||'all';
+  var resp=(document.getElementById('db-resp')||{}).value||'all';
+  var cat=(document.getElementById('db-cat')||{}).value||'all';
+  return deals.filter(function(d){return(canal==='all'||d.canal===canal)&&(resp==='all'||d.resp===resp)&&(cat==='all'||d.cat===cat);});
+}
+
+function renderDashboard() {
+  var d=getFiltered();
+  var ganados=d.filter(function(x){return x.estado==='Trato ganado';});
+  var perdidos=d.filter(function(x){return x.estado==='Trato perdido';});
+  var activos=d.filter(function(x){return x.estado!=='Trato ganado'&&x.estado!=='Trato perdido';});
+  var totalG=ganados.reduce(function(a,x){return a+Number(x.monto);},0);
+  var aov=ganados.length?Math.round(totalG/ganados.length):0;
+  var lts=ganados.filter(function(x){return x.lifetime>0;}).map(function(x){return x.lifetime;});
+  var dur=lts.length?(lts.reduce(function(a,b){return a+b;},0)/lts.length).toFixed(1):'-';
+  var cot=d.filter(function(x){return x.estado==='Cotización enviada'||x.estado==='Trato ganado'||x.estado==='Trato perdido';});
+  var conv=cot.length?Math.round(ganados.length/cot.length*100):0;
+  var pipe=activos.reduce(function(a,x){return a+Number(x.monto);},0);
+
+  document.getElementById('kpi-grid').innerHTML=
+    '<div class="kpi green"><div class="kpi-label">Tratos Ganados</div><div class="kpi-val">'+ganados.length+'</div><div class="kpi-sub">'+fmt(totalG)+'</div></div>'+
+    '<div class="kpi blue"><div class="kpi-label">Pipeline Activo</div><div class="kpi-val">'+fmt(pipe)+'</div><div class="kpi-sub">'+activos.length+' tratos abiertos</div></div>'+
+    '<div class="kpi yellow"><div class="kpi-label">AOV</div><div class="kpi-val">'+fmt(aov)+'</div><div class="kpi-sub">Ticket promedio ganados</div></div>'+
+    '<div class="kpi purple"><div class="kpi-label">Duración Prom.</div><div class="kpi-val">'+dur+' días</div><div class="kpi-sub">Creación → Cierre</div></div>'+
+    '<div class="kpi"><div class="kpi-label">Conversión</div><div class="kpi-val">'+conv+'%</div><div class="kpi-sub">Cotizados → Ganados</div></div>'+
+    '<div class="kpi red"><div class="kpi-label">Tratos Perdidos</div><div class="kpi-val">'+perdidos.length+'</div><div class="kpi-sub">'+fmt(perdidos.reduce(function(a,x){return a+Number(x.monto);},0))+'</div></div>';
+
+  document.getElementById('canal-split').innerHTML=['Corporativo','WS'].map(function(c){
+    var cd=deals.filter(function(x){return x.canal===c;});
+    var cg=cd.filter(function(x){return x.estado==='Trato ganado';});
+    var cc=cd.filter(function(x){return x.estado==='Cotización enviada'||x.estado==='Trato ganado'||x.estado==='Trato perdido';});
+    var aovC=cg.length?Math.round(cg.reduce(function(a,x){return a+Number(x.monto);},0)/cg.length):0;
+    var convC=cc.length?Math.round(cg.length/cc.length*100):0;
+    return '<div class="canal-card"><h3>'+(c==='WS'?'🛍 Wholesale':'🏢 Corporativo')+'</h3>'+
+      '<div class="canal-stat"><span>Tratos totales</span><span>'+cd.length+'</span></div>'+
+      '<div class="canal-stat"><span>Tratos ganados</span><span style="color:var(--green)">'+cg.length+'</span></div>'+
+      '<div class="canal-stat"><span>Conversión</span><span>'+convC+'%</span></div>'+
+      '<div class="canal-stat"><span>Vol. ganado</span><span>'+fmt(cg.reduce(function(a,x){return a+Number(x.monto);},0))+'</span></div>'+
+      '<div class="canal-stat"><span>Vol. cotizado</span><span>'+fmt(cd.filter(function(x){return x.estado==='Cotización enviada';}).reduce(function(a,x){return a+Number(x.monto);},0))+'</span></div>'+
+      '<div class="canal-stat"><span>AOV</span><span>'+fmt(aovC)+'</span></div></div>';
+  }).join('');
+
+  var estados=['Contactado','Catálogo enviado','Cotización enviada','Negociación','Trato ganado','Trato perdido'];
+  makePieChart('chartEstado',estados,estados.map(function(e){return d.filter(function(x){return x.estado===e;}).length;}));
+
+  destroyChart('chartVendedor');
+  var resps=['Balta','Ignacio','Tomás'];
+  charts['chartVendedor']=new Chart(document.getElementById('chartVendedor'),{
+    type:'bar',
+    data:{labels:resps,datasets:[
+      {label:'Ganados',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado==='Trato ganado';}).length;}),backgroundColor:'#22c55e',borderRadius:4},
+      {label:'Activos',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado!=='Trato ganado'&&x.estado!=='Trato perdido';}).length;}),backgroundColor:'#3b82f6',borderRadius:4},
+      {label:'Perdidos',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado==='Trato perdido';}).length;}),backgroundColor:'#ef4444',borderRadius:4}
+    ]},
+    options:{scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}}},plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},barPercentage:.7}
+  });
+
+  var fuentes=['Cliente Antiguo','Prospecto','Correo Atakama','Referido','Sin especificar'];
+  makePieChart('chartFuente',fuentes,fuentes.map(function(f){return d.filter(function(x){return(x.fuente||'Sin especificar')===f;}).length;}));
+
+  var kc=[]; deals.forEach(function(x){if(x.cat&&kc.indexOf(x.cat)===-1)kc.push(x.cat);});
+  var sc=d.filter(function(x){return!x.cat;}).length;
+  var cats=sc>0?kc.concat(['Sin categoría']):kc.slice();
+  var cc2=kc.map(function(c){return d.filter(function(x){return x.cat===c;}).length;}); if(sc>0)cc2.push(sc);
+  var cp=cats.map(function(c,i){return{c:c,n:cc2[i]};}).filter(function(x){return x.n>0;}).sort(function(a,b){return b.n-a.n;});
+  destroyChart('chartCategoria');
+  charts['chartCategoria']=new Chart(document.getElementById('chartCategoria'),{
+    type:'bar',
+    data:{labels:cp.map(function(x){return x.c.length>12?x.c.slice(0,12)+'…':x.c;}),datasets:[{label:'Tratos',data:cp.map(function(x){return x.n;}),backgroundColor:cp.map(function(_,i){return PIE_COLORS[i%PIE_COLORS.length];}),borderRadius:4}]},
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var cat=cp[ctx.dataIndex]?cp[ctx.dataIndex].c:'';var tot=d.filter(function(x){return(x.cat||'Sin categoría')===cat;}).reduce(function(a,x){return a+Number(x.monto);},0);return ' '+ctx.raw+' tratos · '+fmt(tot);}}}}}
+  });
+
+  var reasons=['Proveedor alternativo','Desiste de la compra','Solo cotiza','Falta de stock','Precio muy alto','Sin respuesta'];
+  var rc=reasons.map(function(r){return d.filter(function(x){return x.razon_perdida===r;}).length;});
+  destroyChart('chartPerdida');
+  charts['chartPerdida']=new Chart(document.getElementById('chartPerdida'),{
+    type:'bar',
+    data:{labels:reasons.map(function(r){return r.length>16?r.slice(0,16)+'…':r;}),datasets:[{data:rc,backgroundColor:rc.map(function(n){return n>0?'#ef4444':'#2a3347';}),borderRadius:4}]},
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'},min:0},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false}}}
+  });
+
+  var fc=[d.filter(function(x){return x.estado==='Contactado';}).length,d.filter(function(x){return x.estado==='Catálogo enviado';}).length,d.filter(function(x){return x.estado==='Cotización enviada';}).length,d.filter(function(x){return x.estado==='Negociación';}).length,d.filter(function(x){return x.estado==='Trato ganado';}).length];
+  destroyChart('chartFunnel');
+  charts['chartFunnel']=new Chart(document.getElementById('chartFunnel'),{
+    type:'bar',
+    data:{labels:['Contactado','Catálogo','Cotización','Negociación','Ganado'],datasets:[{data:fc,backgroundColor:['#60a5fa','#a78bfa','#f59e0b','#f97316','#22c55e'],borderRadius:6}]},
+    options:{scales:{x:{ticks:{color:'#94a3b8',font:{size:10}}},y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var prev=fc[ctx.dataIndex-1];var pct=(prev&&prev>0)?Math.round(ctx.raw/prev*100):100;return ' '+ctx.raw+' tratos'+(ctx.dataIndex>0?' ('+pct+'% del anterior)':'');}}}}}
+  });
+}
+
+function renderFunnel() {
+  var canal=(document.getElementById('fn-canal')||{}).value||'all';
+  var resp=(document.getElementById('fn-resp')||{}).value||'all';
+  var d=deals.filter(function(x){return(canal==='all'||x.canal===canal)&&(resp==='all'||x.resp===resp);});
+  var sl=d.filter(function(x){return isStale(x);});
+  document.getElementById('funnel-alerts').innerHTML=sl.length?'<div class="alert-strip">⏰ '+sl.length+' trato(s) sin actividad +'+STALE_DAYS+' días: '+sl.map(function(x){return x.cliente;}).join(', ')+'</div>':'';
+  var stages=[{key:'Contactado',cls:'col-contactado',label:'Contactado'},{key:'Catálogo enviado',cls:'col-catalogo',label:'Catálogo'},{key:'Cotización enviada',cls:'col-cotizacion',label:'Cotización'},{key:'Negociación',cls:'col-negociacion',label:'Negociación'},{key:'Trato ganado',cls:'col-ganado',label:'✅ Ganado'},{key:'Trato perdido',cls:'col-perdido',label:'❌ Perdido'}];
+  var html='';
+  for(var si=0;si<stages.length;si++) {
+    var s=stages[si];
+    var items=d.filter(function(x){return x.estado===s.key;}).sort(function(a,b){if(!a.fecha_creado&&!b.fecha_creado)return 0;if(!a.fecha_creado)return 1;if(!b.fecha_creado)return -1;return new Date(b.fecha_creado)-new Date(a.fecha_creado);});
+    var total=items.reduce(function(a,x){return a+Number(x.monto);},0);
+    var cards='';
+    for(var ci=0;ci<items.length;ci++) {
+      var deal=items[ci];
+      var stale=isStale(deal);
+      var cls='deal-card';
+      if(stale) cls+=' stale'; else if(!deal.fecha_creado) cls+=' no-date'; else if(!deal.monto||deal.monto==0) cls+=' no-amount';
+      var hist=historyMap[deal.id]||[], lastDate=hist.length?hist[hist.length-1].fecha:deal.fecha_creado;
+      cards+='<div class="'+cls+'" data-id="'+deal.id+'" draggable="true">'+
+        '<div class="deal-name">'+deal.cliente+'</div>'+
+        '<div class="deal-amt '+(Number(deal.monto)>0?'has':'none')+'">'+(Number(deal.monto)>0?fmt(deal.monto):'Sin monto')+'</div>'+
+        '<div class="deal-meta"><span class="deal-resp">'+deal.resp+'</span><div class="deal-tags"><span class="tag '+(deal.canal==='WS'?'tag-ws':'tag-corp')+'">'+deal.canal+'</span>'+(stale?'<span class="tag tag-stale">'+daysAgo(lastDate)+'d</span>':'')+'</div></div>'+
+        (deal.next_action?'<div class="deal-next">▶ '+deal.next_action+(deal.next_date?' · '+deal.next_date.slice(5):'')+'</div>':'')+
+        '</div>';
+    }
+    html+='<div class="funnel-col '+s.cls+'" data-stage="'+s.key+'">'+
+      '<div class="funnel-header"><div class="fh-top"><h3>'+s.label+'</h3><span class="stage-count">'+items.length+'</span></div>'+(total>0?'<div class="stage-total">'+fmt(total)+'</div>':'')+'</div>'+
+      '<div class="funnel-cards">'+cards+'</div></div>';
+  }
+  document.getElementById('funnel-wrap').innerHTML=html;
+  document.querySelectorAll('.deal-card').forEach(function(card){
+    card.addEventListener('dragstart',function(e){dragActive=true;dragId=parseInt(card.getAttribute('data-id'));e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragend',function(){setTimeout(function(){dragActive=false;},50);});
+    card.addEventListener('click',function(e){e.stopPropagation();if(dragActive)return;openEdit(parseInt(card.getAttribute('data-id')));});
+  });
+  document.querySelectorAll('.funnel-col').forEach(function(col){
+    col.addEventListener('dragover',function(e){e.preventDefault();col.classList.add('drop-active');});
+    col.addEventListener('dragleave',function(){col.classList.remove('drop-active');});
+    col.addEventListener('drop',function(e){e.preventDefault();col.classList.remove('drop-active');handleDrop(col.getAttribute('data-stage'));});
+  });
+}
+
+async function handleDrop(stage) {
+  if(!dragId) return;
+  var deal=null; for(var i=0;i<deals.length;i++){if(deals[i].id===dragId){deal=deals[i];break;}} dragId=null;
+  if(!deal||deal.estado===stage) return;
+  if(stage==='Trato perdido'){pendingLossId=deal.id;selectedReason='';document.getElementById('modal-loss').classList.add('show');return;}
+  setSyncState('loading','Guardando...');
+  var upd={estado:stage};
+  if(stage==='Trato ganado'&&!deal.fecha_ganado) upd.fecha_ganado=today();
+  await sbPatch('deals',deal.id,upd);
+  await sbPost('history',{deal_id:deal.id,fecha:today(),texto:'→ '+stage});
+  await loadAll(); setSyncState('ok','Conectado'); showToast('✅ Trato actualizado'); renderFunnel();
+}
+
+function openEdit(id) {
+  editingId=id;
+  var d=null; for(var i=0;i<deals.length;i++){if(deals[i].id===id){d=deals[i];break;}} if(!d) return;
+  document.getElementById('edit-title').textContent=d.cliente;
+  document.getElementById('ef-cliente').value=d.cliente;
+  document.getElementById('ef-empresa').value=d.empresa||'';
+  document.getElementById('ef-rut').value=d.rut||'';
+  document.getElementById('ef-celular').value=d.celular||'';
+  document.getElementById('ef-email').value=d.email||'';
+  document.getElementById('ef-canal').value=d.canal;
+  document.getElementById('ef-cat').value=d.cat||'';
+  document.getElementById('ef-resp').value=d.resp;
+  document.getElementById('ef-fuente').value=d.fuente||'';
+  document.getElementById('ef-estado').value=d.estado;
+  document.getElementById('ef-monto').value=d.monto||0;
+  document.getElementById('ef-fechaCreado').value=d.fecha_creado||'';
+  document.getElementById('ef-fechaGanado').value=d.fecha_ganado||'';
+  document.getElementById('ef-razon').value=d.razon_perdida||'';
+  document.getElementById('ef-next').value=d.next_action||'';
+  document.getElementById('ef-nextdate').value=d.next_date||'';
+  document.getElementById('ef-comentario').value=d.comentario||'';
+  var hist=historyMap[id]||[], hhtml='';
+  if(hist.length){var rev=hist.slice().reverse();for(var i=0;i<rev.length;i++){hhtml+='<div class="hist-item"><div class="hist-dot"></div><span class="hist-date">'+rev[i].fecha.slice(5)+'</span><span class="hist-text">'+rev[i].texto+'</span></div>';}}
+  else hhtml='<p style="color:var(--text3);font-size:11px">Sin historial registrado.</p>';
+  document.getElementById('ef-history').innerHTML=hhtml;
+  document.getElementById('ef-del-btn').onclick=function(){if(confirm('¿Eliminar este trato?'))deleteDeal(id);};
+  document.getElementById('modal-edit').classList.add('show');
+}
+
+async function saveEdit() {
+  var d=null; for(var i=0;i<deals.length;i++){if(deals[i].id===editingId){d=deals[i];break;}} if(!d) return;
+  var newEstado=document.getElementById('ef-estado').value;
+  if(newEstado==='Trato perdido'&&!document.getElementById('ef-razon').value){alert('Selecciona una razón de pérdida.');return;}
+  var fc=document.getElementById('ef-fechaCreado').value||null;
+  var fg=document.getElementById('ef-fechaGanado').value||null;
+  if(!fg&&newEstado==='Trato ganado') fg=today();
+  var fcierre=fg||(newEstado==='Trato perdido'?today():null);
+  var upd={cliente:document.getElementById('ef-cliente').value.trim().toUpperCase(),empresa:document.getElementById('ef-empresa').value,rut:document.getElementById('ef-rut').value,celular:document.getElementById('ef-celular').value,email:document.getElementById('ef-email').value,canal:document.getElementById('ef-canal').value,cat:document.getElementById('ef-cat').value,resp:document.getElementById('ef-resp').value,fuente:document.getElementById('ef-fuente').value,estado:newEstado,monto:parseFloat(document.getElementById('ef-monto').value)||0,fecha_creado:fc,fecha_ganado:fg,razon_perdida:document.getElementById('ef-razon').value,next_action:document.getElementById('ef-next').value,next_date:document.getElementById('ef-nextdate').value||null,comentario:document.getElementById('ef-comentario').value,lifetime:calcLifetime(fc,fcierre)};
+  setSyncState('loading','Guardando...');
+  if(newEstado!==d.estado){
+    var note=newEstado==='Trato ganado'?'→ Trato ganado':newEstado==='Trato perdido'?'→ Trato perdido · '+upd.razon_perdida:'→ '+newEstado;
+    await sbPost('history',{deal_id:d.id,fecha:today(),texto:note});
+  } else {
+    var parts=[];
+    if(upd.next_action!==d.next_action&&upd.next_action) parts.push('▶ '+upd.next_action+(upd.next_date?' · '+upd.next_date.slice(5):''));
+    if(upd.comentario!==d.comentario&&upd.comentario) parts.push('💬 '+upd.comentario);
+    if(Number(upd.monto)!==Number(d.monto)&&upd.monto>0) parts.push('💰 '+fmt(upd.monto));
+    if(parts.length) await sbPost('history',{deal_id:d.id,fecha:today(),texto:parts.join(' · ')});
+  }
+  await sbPatch('deals',d.id,upd); await loadAll(); setSyncState('ok','Conectado'); showToast('✅ Guardado');
+  closeModal('modal-edit'); renderDealsTable(); renderFunnel();
+  if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+}
+
+async function deleteDeal(id) {
+  setSyncState('loading','Eliminando...');
+  await sbDelete('deals',id); await loadAll(); setSyncState('ok','Conectado');
+  showToast('🗑 Trato eliminado'); closeModal('modal-edit'); renderDealsTable(); renderFunnel();
+}
+
+function renderDealsTable() {
+  var q=((document.getElementById('deals-search')||{}).value||'').toLowerCase();
+  var est=(document.getElementById('deals-estado')||{}).value||'all';
+  var resp=(document.getElementById('deals-resp')||{}).value||'all';
+  var canal=(document.getElementById('deals-canal')||{}).value||'all';
+  var monto=(document.getElementById('deals-monto')||{}).value||'all';
+  var filtered=deals.filter(function(d){return(d.cliente.toLowerCase().includes(q)||(d.empresa||'').toLowerCase().includes(q)||(d.rut||'').toLowerCase().includes(q))&&(est==='all'||d.estado===est)&&(resp==='all'||d.resp===resp)&&(canal==='all'||d.canal===canal)&&(monto==='all'||(monto==='zero'?!d.monto||d.monto==0:d.monto>0));});
+  var html='';
+  for(var i=0;i<filtered.length;i++){
+    var d=filtered[i];
+    html+='<tr>'+
+      '<td style="color:var(--text3);font-size:11px">'+d.id+'</td>'+
+      '<td style="font-weight:600;color:var(--accent);cursor:pointer" onclick="openEdit('+d.id+')">'+d.cliente+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.empresa||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.rut||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.celular||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(d.email||'-')+'</td>'+
+      '<td><span class="tag '+(d.canal==='WS'?'tag-ws':'tag-corp')+'">'+d.canal+'</span></td>'+
+      '<td>'+d.resp+'</td>'+
+      '<td style="font-weight:600">'+(Number(d.monto)>0?fmt(d.monto):'<span style="color:var(--text3)">-</span>')+'</td>'+
+      '<td><span class="badge '+badgeClass(d.estado)+'">'+d.estado+'</span></td>'+
+      '<td><button class="btn btn-secondary btn-sm" onclick="openEdit('+d.id+')">✏️</button></td>'+
+      '</tr>';
+  }
+  document.getElementById('deals-tbody').innerHTML=html;
+}
+
+function renderClientsTable() {
+  var q=((document.getElementById('cli-search')||{}).value||'').toLowerCase();
+  var canal=(document.getElementById('cli-canal')||{}).value||'all';
+  var map={};
+  deals.filter(function(d){return(d.cliente.toLowerCase().includes(q)||(d.empresa||'').toLowerCase().includes(q))&&(canal==='all'||d.canal===canal);}).forEach(function(d){
+    if(!map[d.cliente]) map[d.cliente]={cliente:d.cliente,empresa:d.empresa||'',rut:d.rut||'',celular:d.celular||'',email:d.email||'',canal:d.canal,cat:d.cat,resp:d.resp,tratos:0,total:0};
+    map[d.cliente].tratos++; map[d.cliente].total+=Number(d.monto);
+  });
+  var html='';
+  Object.values(map).forEach(function(c){
+    html+='<tr>'+
+      '<td style="font-weight:600">'+c.cliente+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.empresa||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.rut||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.celular||'-')+'</td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+(c.email||'-')+'</td>'+
+      '<td><span class="tag '+(c.canal==='WS'?'tag-ws':'tag-corp')+'">'+c.canal+'</span></td>'+
+      '<td style="color:var(--text3);font-size:11px">'+(c.cat||'-')+'</td>'+
+      '<td>'+c.resp+'</td>'+
+      '<td style="text-align:center">'+c.tratos+'</td>'+
+      '<td style="font-weight:600;color:var(--accent)">'+fmt(c.total)+'</td>'+
+      '</tr>';
+  });
+  document.getElementById('cli-tbody').innerHTML=html;
+}
+
+function globalSearch(q) {
+  if(!q||q.length<2){hideGlobalResults();return;}
+  var ql=q.toLowerCase();
+  var res=deals.filter(function(d){return d.cliente.toLowerCase().includes(ql)||(d.empresa||'').toLowerCase().includes(ql)||(d.rut||'').toLowerCase().includes(ql);});
+  var el=document.getElementById('search-results');
+  if(!res.length){el.innerHTML='<div class="sr-item" style="color:var(--text3)">Sin resultados</div>';el.classList.add('show');return;}
+  var html=''; var shown=res.slice(0,8);
+  for(var i=0;i<shown.length;i++){var d=shown[i];html+='<div class="sr-item" onclick="openEdit('+d.id+');hideGlobalResults()"><div><span style="font-weight:600;color:var(--accent)">'+d.cliente+'</span>'+(d.empresa?' <span style="color:var(--text3);font-size:11px">· '+d.empresa+'</span>':'')+'</div><div style="display:flex;gap:6px;align-items:center"><span class="badge '+badgeClass(d.estado)+'">'+d.estado+'</span><span style="color:var(--text3);font-size:10px">'+d.resp+'</span></div></div>';}
+  el.innerHTML=html; el.classList.add('show');
+}
+function hideGlobalResults(){document.getElementById('search-results').classList.remove('show');}
+
+function resetNewForm() {
+  ['nf-cliente','nf-empresa','nf-rut','nf-celular','nf-email','nf-monto','nf-comentario','nf-next'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('nf-fecha').value=today();
+  document.getElementById('nf-nextdate').value='';
+}
+
+async function saveDeal() {
+  var cliente=document.getElementById('nf-cliente').value.trim();
+  if(!cliente){alert('Ingresa el nombre del cliente');return;}
+  var estado=document.getElementById('nf-estado').value;
+  setSyncState('loading','Guardando...');
+  var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('nf-empresa').value,rut:document.getElementById('nf-rut').value,celular:document.getElementById('nf-celular').value,email:document.getElementById('nf-email').value,canal:document.getElementById('nf-canal').value,cat:document.getElementById('nf-cat').value,fuente:document.getElementById('nf-fuente').value,resp:document.getElementById('nf-resp').value,monto:parseFloat(document.getElementById('nf-monto').value)||0,estado:estado,lifetime:0,fecha_creado:document.getElementById('nf-fecha').value||null,fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('nf-comentario').value,next_action:document.getElementById('nf-next').value,next_date:document.getElementById('nf-nextdate').value||null,razon_perdida:''});
+  if(Array.isArray(rows)&&rows[0]) await sbPost('history',{deal_id:rows[0].id,fecha:today(),texto:'Trato creado · '+estado});
+  await loadAll(); setSyncState('ok','Conectado'); showToast('✅ Trato creado'); showPage('deals');
+}
+
+function selReason(el,r){document.querySelectorAll('.reason-btn').forEach(function(b){b.classList.remove('sel');});el.classList.add('sel');selectedReason=r;}
+
+async function confirmLoss() {
+  if(!selectedReason){alert('Selecciona una razón de pérdida');return;}
+  var d=null; for(var i=0;i<deals.length;i++){if(deals[i].id===pendingLossId){d=deals[i];break;}} if(!d) return;
+  setSyncState('loading','Guardando...');
+  var comment=document.getElementById('loss-comment').value;
+  await sbPatch('deals',d.id,{estado:'Trato perdido',razon_perdida:selectedReason,fecha_perdido:today(),comentario:comment?(d.comentario?d.comentario+' | ':'')+comment:d.comentario});
+  await sbPost('history',{deal_id:d.id,fecha:today(),texto:'→ Trato perdido · '+selectedReason});
+  await loadAll(); setSyncState('ok','Conectado'); showToast('Trato marcado como perdido');
+  document.getElementById('loss-comment').value=''; closeModal('modal-loss'); renderFunnel(); renderDealsTable();
+}
+
+function exportExcel() {
+  var rows=[['#','Cliente','Empresa','RUT','Celular','Email','Canal','Categoría','Responsable','Fuente','Monto','Estado','Fecha Creado','Fecha Ganado','Fecha Perdido','Lifetime (días)','Razón Pérdida','Próxima Acción','Comentario']];
+  for(var i=0;i<deals.length;i++){
+    var d=deals[i];
+    rows.push([d.id,d.cliente,d.empresa||'',d.rut||'',d.celular||'',d.email||'',d.canal,d.cat||'',d.resp,d.fuente||'',Number(d.monto)||0,d.estado,d.fecha_creado||'',d.fecha_ganado||'',d.fecha_perdido||'',d.lifetime||0,d.razon_perdida||'',d.next_action||'',d.comentario||'']);
+  }
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[6,25,20,14,14,25,12,18,10,16,14,18,13,13,13,8,20,25,30].map(function(w){return{wch:w};});
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Tratos');
+  XLSX.writeFile(wb,'Atakama_CRM_'+today()+'.xlsx');
+}
+
+init();
+</script>
+</body>
+</html>
