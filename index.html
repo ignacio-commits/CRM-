@@ -224,7 +224,10 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
   <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px;max-width:640px">
     <div class="form-grid">
       <div class="form-group full"><label>Nombre del Cliente *</label><input type="text" id="nf-cliente"></div>
-      <div class="form-group"><label>Empresa / RUT</label><input type="text" id="nf-empresa"></div>
+      <div class="form-group"><label>Empresa</label><input type="text" id="nf-empresa"></div>
+      <div class="form-group"><label>RUT</label><input type="text" id="nf-rut"></div>
+      <div class="form-group"><label>Celular</label><input type="text" id="nf-celular"></div>
+      <div class="form-group"><label>Email</label><input type="text" id="nf-email"></div>
       <div class="form-group"><label>Canal</label><select id="nf-canal"><option>Corporativo</option><option>WS</option></select></div>
       <div class="form-group"><label>Categoría</label><select id="nf-cat"><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
       <div class="form-group"><label>Responsable</label><select id="nf-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
@@ -251,7 +254,10 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
     <div class="esection">Información del cliente</div>
     <div class="form-grid">
       <div class="form-group full"><label>Nombre del Cliente</label><input type="text" id="ef-cliente"></div>
-      <div class="form-group full"><label>Empresa / RUT</label><input type="text" id="ef-empresa"></div>
+      <div class="form-group full"><label>Empresa</label><input type="text" id="ef-empresa"></div>
+      <div class="form-group"><label>RUT</label><input type="text" id="ef-rut"></div>
+      <div class="form-group"><label>Celular</label><input type="text" id="ef-celular"></div>
+      <div class="form-group full"><label>Email</label><input type="text" id="ef-email"></div>
       <div class="form-group"><label>Canal</label><select id="ef-canal"><option>Corporativo</option><option>WS</option></select></div>
       <div class="form-group"><label>Categoría</label><select id="ef-cat"><option value="">Sin categoría</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
       <div class="form-group"><label>Responsable</label><select id="ef-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
@@ -774,6 +780,9 @@ function openEdit(id) {
   document.getElementById('edit-title').textContent = d.cliente;
   document.getElementById('ef-cliente').value = d.cliente;
   document.getElementById('ef-empresa').value = d.empresa || '';
+  document.getElementById('ef-rut').value = d.rut || '';
+  document.getElementById('ef-celular').value = d.celular || '';
+  document.getElementById('ef-email').value = d.email || '';
   document.getElementById('ef-canal').value = d.canal;
   document.getElementById('ef-cat').value = d.cat || '';
   document.getElementById('ef-resp').value = d.resp;
@@ -816,6 +825,9 @@ async function saveEdit() {
   var upd = {
     cliente: document.getElementById('ef-cliente').value.trim().toUpperCase(),
     empresa: document.getElementById('ef-empresa').value,
+    rut: document.getElementById('ef-rut').value,
+    celular: document.getElementById('ef-celular').value,
+    email: document.getElementById('ef-email').value,
     canal: document.getElementById('ef-canal').value,
     cat: document.getElementById('ef-cat').value,
     resp: document.getElementById('ef-resp').value,
@@ -946,7 +958,7 @@ function hideGlobalResults() { document.getElementById('search-results').classLi
 
 // ── NEW DEAL ──────────────────────────────────────────────────────────────────
 function resetNewForm() {
-  ['nf-cliente','nf-empresa','nf-monto','nf-comentario','nf-next'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  ['nf-cliente','nf-empresa','nf-rut','nf-celular','nf-email','nf-monto','nf-comentario','nf-next'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('nf-fecha').value = today();
   document.getElementById('nf-nextdate').value = '';
 }
@@ -959,6 +971,9 @@ async function saveDeal() {
   var rows = await sbPost('deals', {
     cliente: cliente.toUpperCase(),
     empresa: document.getElementById('nf-empresa').value,
+    rut: document.getElementById('nf-rut').value,
+    celular: document.getElementById('nf-celular').value,
+    email: document.getElementById('nf-email').value,
     canal: document.getElementById('nf-canal').value,
     cat: document.getElementById('nf-cat').value,
     fuente: document.getElementById('nf-fuente').value,
