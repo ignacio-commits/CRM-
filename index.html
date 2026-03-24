@@ -664,6 +664,7 @@ function renderFunnel(){
 
 let dragId=null;
 function dragDeal(e,id){window._dragging=true;dragId=id;e.dataTransfer.effectAllowed='move';}
+function onCardClick(e,id){e.stopPropagation();if(window._dragging){window._dragging=false;return;}openEdit(id);}
 async function dropDeal(e,stage){
   e.preventDefault();e.currentTarget.classList.remove('drop-active');
   if(!dragId)return;
