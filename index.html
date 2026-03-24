@@ -167,9 +167,8 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
     <div class="chart-card"><div class="chart-title">Tratos por Categoría</div><canvas id="chartCategoria" height="130"></canvas></div>
     <div class="chart-card"><div class="chart-title">Razones de Pérdida</div><canvas id="chartPerdida" height="130"></canvas></div>
   </div>
-  <div class="charts-row" style="grid-template-columns:1fr 1fr">
-    <div class="chart-card"><div class="chart-title">Funnel de Conversión por Etapa</div><canvas id="chartFunnel" height="160"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Tiempo Promedio por Etapa (días)</div><canvas id="chartEtapaTiempo" height="160"></canvas></div>
+  <div class="charts-row" style="grid-template-columns:1fr">
+    <div class="chart-card"><div class="chart-title">Funnel de Conversión por Etapa</div><canvas id="chartFunnel" height="100"></canvas></div>
   </div>
 </div>
 
@@ -736,6 +735,20 @@ async function saveEdit(){
     const note=newEstado==='Trato ganado'?'→ Trato ganado':newEstado==='Trato perdido'?`→ Trato perdido · ${upd.razon_perdida}`:`→ ${newEstado}`;
     await sbPost('history',{deal_id:d.id,fecha:today(),texto:note});
     if(newEstado==='Trato ganado'&&!upd.fecha_ganado)upd.fecha_ganado=today();
+  } else {
+    // Registrar actividad si hubo cambios en seguimiento o comentario
+    const cambioSeguimiento=
+      upd.next_action!==d.next_action||
+      upd.next_date!==d.next_date||
+      upd.comentario!==d.comentario||
+      upd.monto!==d.monto;
+    if(cambioSeguimiento){
+      const parts=[];
+      if(upd.next_action!==d.next_action) parts.push(`Próx. acción: ${upd.next_action||'borrada'}`);
+      if(upd.comentario!==d.comentario) parts.push('Comentario actualizado');
+      if(upd.monto!==d.monto) parts.push(`Monto: ${fmt(upd.monto)}`);
+      await sbPost('history',{deal_id:d.id,fecha:today(),texto:`✏️ ${parts.join(' · ')}`});
+    }
   }
   await sbPatch('deals',d.id,upd);
   await loadAll();
