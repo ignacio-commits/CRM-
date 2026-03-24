@@ -253,7 +253,14 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
 <!-- MODAL EDITAR -->
 <div class="modal-bg" id="modal-edit">
   <div class="modal">
-    <h2>✏️ <span id="edit-title"></span></h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin-bottom:0">✏️ <span id="edit-title"></span></h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit')">Cancelar</button>
+        <button class="btn btn-danger btn-sm" id="ef-del-btn">🗑 Eliminar</button>
+        <button class="btn btn-success btn-sm" onclick="saveEdit()">💾 Guardar</button>
+      </div>
+    </div>
     <div class="esection">Información del cliente</div>
     <div class="form-grid">
       <div class="form-group full"><label>Nombre del Cliente</label><input type="text" id="ef-cliente"></div>
@@ -282,11 +289,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
     </div>
     <div class="esection">Historial de actividad</div>
     <div id="ef-history"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit')">Cancelar</button>
-      <button class="btn btn-danger btn-sm" id="ef-del-btn">🗑 Eliminar</button>
-      <button class="btn btn-success btn-sm" onclick="saveEdit()">💾 Guardar</button>
-    </div>
+
   </div>
 </div>
 
