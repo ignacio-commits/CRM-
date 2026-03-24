@@ -744,10 +744,10 @@ async function saveEdit(){
       upd.monto!==d.monto;
     if(cambioSeguimiento){
       const parts=[];
-      if(upd.next_action!==d.next_action) parts.push(`Próx. acción: ${upd.next_action||'borrada'}`);
-      if(upd.comentario!==d.comentario) parts.push('Comentario actualizado');
-      if(upd.monto!==d.monto) parts.push(`Monto: ${fmt(upd.monto)}`);
-      await sbPost('history',{deal_id:d.id,fecha:today(),texto:`✏️ ${parts.join(' · ')}`});
+      if(upd.next_action!==d.next_action&&upd.next_action) parts.push(`▶ ${upd.next_action}${upd.next_date?' · '+upd.next_date.slice(5):''}`);
+      if(upd.comentario!==d.comentario&&upd.comentario) parts.push(`💬 ${upd.comentario}`);
+      if(upd.monto!==d.monto&&upd.monto>0) parts.push(`💰 ${fmt(upd.monto)}`);
+      if(parts.length) await sbPost('history',{deal_id:d.id,fecha:today(),texto:parts.join(' · ')});
     }
   }
   await sbPatch('deals',d.id,upd);
