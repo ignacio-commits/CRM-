@@ -262,7 +262,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
       <div class="form-group"><label>Monto ($)</label><input type="number" id="ef-monto"></div>
       <div class="form-group"><label>Fecha Creado</label><input type="date" id="ef-fechaCreado"></div>
       <div class="form-group"><label>Fecha Ganado</label><input type="date" id="ef-fechaGanado"></div>
-      <div class="form-group"><label>Lifetime (días)</label><input type="number" id="ef-lifetime"></div>
+
       <div class="form-group"><label>Razón Pérdida</label><select id="ef-razon"><option value="">-</option><option>Proveedor alternativo</option><option>Desiste de la compra</option><option>Solo cotiza</option><option>Falta de stock</option><option>Precio muy alto</option><option>Sin respuesta</option></select></div>
     </div>
     <div class="edit-section">Seguimiento</div>
@@ -422,6 +422,8 @@ function showToast(msg,dur=2500){
 const fmt=n=>n>0?'$'+n.toLocaleString('es-CL'):'-';
 const badgeClass=s=>({'Cotización enviada':'badge-cot','Catálogo enviado':'badge-cat','Trato ganado':'badge-gan','Trato perdido':'badge-per','Negociación':'badge-neg','Contactado':'badge-con'}[s]||'badge-con');
 const today=()=>new Date().toISOString().slice(0,10);
+const calcLifetime=(creado,cerrado)=>{if(!creado||!cerrado)return 0;return Math.max(0,Math.round((new Date(cerrado)-new Date(creado))/(1000*60*60*24)));};
+
 const daysAgo=d=>{if(!d)return 999;return Math.round((new Date()-new Date(d))/(1000*60*60*24));};
 const isStale=deal=>{
   if(['Trato ganado','Trato perdido'].includes(deal.estado))return false;
@@ -725,7 +727,7 @@ async function saveEdit(){
     monto:parseFloat(document.getElementById('ef-monto').value)||0,
     fecha_creado:document.getElementById('ef-fechaCreado').value||null,
     fecha_ganado:document.getElementById('ef-fechaGanado').value||null,
-    lifetime:parseInt(document.getElementById('ef-lifetime').value)||0,
+    lifetime:calcLifetime(document.getElementById('ef-fechaCreado').value, document.getElementById('ef-fechaGanado').value||document.getElementById('ef-estado').value==='Trato perdido'?today():null),
     razon_perdida:document.getElementById('ef-razon').value,
     next_action:document.getElementById('ef-next').value,
     next_date:document.getElementById('ef-nextdate').value||null,
