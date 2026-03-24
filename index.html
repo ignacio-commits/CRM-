@@ -663,12 +663,15 @@ function renderFunnel(){
 }
 
 let dragId=null;
-function dragDeal(e,id){window._dragging=true;dragId=id;e.dataTransfer.effectAllowed='move';}
+let isDragging=false;
+function dragStart(e,id){isDragging=true;dragId=id;e.dataTransfer.effectAllowed='move';}
+function dragEnd(){setTimeout(()=>{isDragging=false;},100);}
+function cardClick(e,id){e.stopPropagation();if(isDragging)return;openEdit(id);}
 function onCardClick(e,id){e.stopPropagation();if(window._dragging){window._dragging=false;return;}openEdit(id);}
 async function dropDeal(e,stage){
   e.preventDefault();e.currentTarget.classList.remove('drop-active');
   if(!dragId)return;
-  const deal=deals.find(d=>d.id===dragId);dragId=null;if(!deal)return;
+  const deal=deals.find(d=>d.id===dragId);dragId=null;isDragging=false;if(!deal)return;
   if(stage==='Trato perdido'){pendingLossId=deal.id;selectedReason='';document.getElementById('modal-loss').classList.add('show');return;}
   if(deal.estado===stage)return;
   setSyncState('loading','Guardando...');
