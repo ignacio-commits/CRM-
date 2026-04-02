@@ -608,7 +608,7 @@ function renderDashboard(){
     '<div class="kpi red"><div class="kpi-label">Tratos Perdidos</div><div class="kpi-val">'+per.length+'</div><div class="kpi-sub">'+fmt(per.reduce(function(a,x){return a+Number(x.monto);},0))+'</div></div>';
 
   document.getElementById('canal-split').innerHTML=['Corporativo','WS'].map(function(c){
-    var cd=deals.filter(function(x){return x.canal===c;});
+    var cd=d.filter(function(x){return x.canal===c;});
     var cg=cd.filter(function(x){return x.estado==='Trato ganado';});
     var cc=cd.filter(function(x){return x.estado==='Cotización enviada'||x.estado==='Trato ganado'||x.estado==='Trato perdido';});
     var aovC=cg.length?Math.round(cg.reduce(function(a,x){return a+Number(x.monto);},0)/cg.length):0;
