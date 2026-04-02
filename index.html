@@ -241,11 +241,15 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
   <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px;max-width:640px">
     <div class="form-grid">
       <div class="form-group full" style="position:relative">
+        <label>Empresa</label>
+        <input type="text" id="nf-empresa" autocomplete="off" oninput="empresaSuggest(this.value)" onblur="setTimeout(hideEmpresaSuggest,200)">
+        <div id="empresa-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:6px;z-index:50;max-height:200px;overflow-y:auto"></div>
+      </div>
+      <div class="form-group full" style="position:relative">
         <label>Nombre del Cliente *</label>
         <input type="text" id="nf-cliente" autocomplete="off" oninput="clienteSuggest(this.value)" onblur="setTimeout(hideClienteSuggest,200)">
         <div id="cliente-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:6px;z-index:50;max-height:200px;overflow-y:auto"></div>
       </div>
-      <div class="form-group full"><label>Empresa</label><input type="text" id="nf-empresa"></div>
       <div class="form-group"><label>RUT</label><input type="text" id="nf-rut" placeholder="76.xxx.xxx-x"></div>
       <div class="form-group"><label>Celular</label><input type="text" id="nf-celular" placeholder="+56 9 xxxx xxxx"></div>
       <div class="form-group full"><label>Email</label><input type="text" id="nf-email" placeholder="contacto@empresa.cl"></div>
@@ -828,6 +832,30 @@ function globalSearch(q){
   el.innerHTML=html;el.classList.add('show');
 }
 function hideGlobalResults(){document.getElementById('search-results').classList.remove('show');}
+
+function empresaSuggest(q){
+  var el=document.getElementById('empresa-suggest');
+  if(!q||q.length<2){el.style.display='none';return;}
+  var ql=q.toLowerCase(),matches=[];
+  deals.forEach(function(d){
+    if((d.empresa||'').toLowerCase().includes(ql)||d.cliente.toLowerCase().includes(ql)){
+      matches.push(d);
+    }
+  });
+  // Deduplicar por cliente
+  var seen={};
+  matches=matches.filter(function(d){if(seen[d.cliente])return false;seen[d.cliente]=true;return true;});
+  if(!matches.length){el.style.display='none';return;}
+  el.innerHTML=matches.slice(0,8).map(function(d){
+    return '<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px" onmousedown="fillCliente('+d.id+')">'+
+      '<span style="font-weight:600;color:var(--accent)">'+d.cliente+'</span>'+
+      (d.empresa?' <span style="color:var(--text3)">· '+d.empresa+'</span>':'')+
+      (d.cat?' <span style="color:var(--text3);font-size:10px">· '+d.cat+'</span>':'')+
+      '</div>';
+  }).join('');
+  el.style.display='block';
+}
+function hideEmpresaSuggest(){var el=document.getElementById('empresa-suggest');if(el)el.style.display='none';}
 
 function clienteSuggest(q){
   var el=document.getElementById('cliente-suggest');
