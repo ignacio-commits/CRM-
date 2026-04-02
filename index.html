@@ -608,8 +608,11 @@ function renderFunnel(){
       var cls='deal-card';
       if(stale)cls+=' stale';else if(!deal.fecha_creado)cls+=' no-date';else if(!deal.monto||deal.monto==0)cls+=' no-amount';
       var hist=histMap[deal.id]||[],lastDate=hist.length?hist[hist.length-1].fecha:deal.fecha_creado;
+      var displayName = deal.empresa || deal.cliente;
+      var subName = deal.empresa ? deal.cliente : '';
       cards+='<div class="'+cls+'" data-id="'+deal.id+'" draggable="true">'+
-        '<div class="deal-name">'+deal.cliente+'</div>'+
+        '<div class="deal-name">'+displayName+'</div>'+
+        (subName?'<div style="font-size:10px;color:var(--text3);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+subName+'</div>':'')+
         '<div class="deal-amt '+(Number(deal.monto)>0?'has':'none')+'">'+(Number(deal.monto)>0?fmt(deal.monto):'Sin monto')+'</div>'+
         '<div class="deal-meta"><span class="deal-resp">'+deal.resp+'</span><div class="deal-tags"><span class="tag '+(deal.canal==='WS'?'tag-ws':'tag-corp')+'">'+deal.canal+'</span>'+(stale?'<span class="tag tag-stale">'+daysAgo(lastDate)+'d</span>':'')+'</div></div>'+
         (deal.next_action?'<div class="deal-next">▶ '+deal.next_action+(deal.next_date?' · '+deal.next_date.slice(5):'')+'</div>':'')+
