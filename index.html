@@ -359,6 +359,17 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
   </div>
 </div>
 
+<!-- MODAL DRILL-DOWN -->
+<div class="modal-bg" id="modal-drill">
+  <div class="modal" style="width:700px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin-bottom:0" id="drill-title"></h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-drill')">✕ Cerrar</button>
+    </div>
+    <div id="drill-body"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -498,13 +509,48 @@ var pctPlugin={id:'pctLabels',afterDatasetsDraw:function(chart){
   });
 }};
 
-function makePieChart(id,labels,data){
+function openDrillDown(title,filtered){
+  document.getElementById('drill-title').textContent=title+' · '+filtered.length+' trato(s)';
+  var html='';
+  if(!filtered.length){
+    html='<p style="color:var(--text3);padding:12px 0">No hay tratos en esta categoría.</p>';
+  } else {
+    var total=filtered.reduce(function(a,d){return a+Number(d.monto);},0);
+    html='<table><thead><tr><th>Cliente</th><th>Resp.</th><th>Canal</th><th>Estado</th><th>Monto</th><th></th></tr></thead><tbody>';
+    filtered.forEach(function(d){
+      html+='<tr>'+
+        '<td style="font-weight:600;color:var(--accent)">'+d.cliente+(d.empresa?'<div style="font-size:10px;color:var(--text3)">'+d.empresa+'</div>':'')+'</td>'+
+        '<td style="font-size:11px">'+d.resp+'</td>'+
+        '<td><span class="tag '+(d.canal==='WS'?'tag-ws':'tag-corp')+'">'+d.canal+'</span></td>'+
+        '<td><span class="badge '+badgeClass(d.estado)+'">'+d.estado+'</span></td>'+
+        '<td style="font-weight:600">'+(Number(d.monto)>0?fmt(d.monto):'<span style="color:var(--text3)">-</span>')+'</td>'+
+        '<td><button class="btn btn-secondary btn-sm" onclick="closeModal(\'modal-drill\');openEdit('+d.id+')">✏️</button></td>'+
+        '</tr>';
+    });
+    html+='</tbody></table>';
+    if(total>0)html+='<div style="text-align:right;padding:10px 12px 0;font-size:12px;color:var(--text2)">Total: <strong style="color:var(--accent)">'+fmt(total)+'</strong></div>';
+  }
+  document.getElementById('drill-body').innerHTML=html;
+  document.getElementById('modal-drill').classList.add('show');
+}
+
+function makePieChart(id,labels,data,fieldFn){
   destroyChart(id);
   var total=data.reduce(function(a,b){return a+b;},0);
+  var opts={cutout:'46%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:6}},tooltip:{callbacks:{label:function(ctx){var pct=total?Math.round(ctx.raw/total*100):0;return ' '+ctx.label+': '+ctx.raw+' ('+pct+'%)';}}}},layout:{padding:4}};
+  if(fieldFn){
+    opts.onClick=function(e,elements){
+      if(!elements.length)return;
+      var label=labels[elements[0].index];
+      var filtered=getFiltered().filter(function(d){return fieldFn(d)===label;});
+      openDrillDown(label,filtered);
+    };
+    opts.onHover=function(e){e.native.target.style.cursor='pointer';};
+  }
   charts[id]=new Chart(document.getElementById(id),{
     type:'doughnut',
     data:{labels:labels,datasets:[{data:data,backgroundColor:PIE.slice(0,labels.length),borderWidth:2,borderColor:'#1e2535'}]},
-    options:{cutout:'46%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:6}},tooltip:{callbacks:{label:function(ctx){var pct=total?Math.round(ctx.raw/total*100):0;return ' '+ctx.label+': '+ctx.raw+' ('+pct+'%)';}}}},layout:{padding:4}},
+    options:opts,
     plugins:[pctPlugin]
   });
 }
@@ -581,7 +627,7 @@ function renderDashboard(){
   }).join('');
 
   var estados=['Contactado','Catálogo enviado','Cotización enviada','Negociación','Trato ganado','Trato perdido'];
-  makePieChart('chartEstado',estados,estados.map(function(e){return d.filter(function(x){return x.estado===e;}).length;}));
+  makePieChart('chartEstado',estados,estados.map(function(e){return d.filter(function(x){return x.estado===e;}).length;}),function(x){return x.estado;});
 
   destroyChart('chartVendedor');
   var resps=['Balta','Ignacio','Tomás'];
@@ -592,11 +638,13 @@ function renderDashboard(){
       {label:'Activos',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado!=='Trato ganado'&&x.estado!=='Trato perdido';}).length;}),backgroundColor:'#3b82f6',borderRadius:4},
       {label:'Perdidos',data:resps.map(function(r){return d.filter(function(x){return x.resp===r&&x.estado==='Trato perdido';}).length;}),backgroundColor:'#ef4444',borderRadius:4}
     ]},
-    options:{scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}}},plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},barPercentage:.7}
+    options:{scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}}},plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},barPercentage:.7,
+    onClick:function(e,elements){if(!elements.length)return;var resp=resps[elements[0].index];var filtered=getFiltered().filter(function(x){return x.resp===resp;});openDrillDown(resp,filtered);},
+    onHover:function(e){e.native.target.style.cursor='pointer';}}
   });
 
   var fuentes=['Cliente Antiguo','Prospecto','Correo Atakama','Referido','Formulario Web','Sin especificar'];
-  makePieChart('chartFuente',fuentes,fuentes.map(function(f){return d.filter(function(x){return(x.fuente||'Sin especificar')===f;}).length;}));
+  makePieChart('chartFuente',fuentes,fuentes.map(function(f){return d.filter(function(x){return(x.fuente||'Sin especificar')===f;}).length;}),function(x){return x.fuente||'Sin especificar';});
 
   var kc=[];deals.forEach(function(x){if(x.cat&&kc.indexOf(x.cat)===-1)kc.push(x.cat);});
   var sc=d.filter(function(x){return !x.cat;}).length;
@@ -607,7 +655,9 @@ function renderDashboard(){
   charts['chartCategoria']=new Chart(document.getElementById('chartCategoria'),{
     type:'bar',
     data:{labels:cp.map(function(x){return x.c.length>12?x.c.slice(0,12)+'…':x.c;}),datasets:[{label:'Tratos',data:cp.map(function(x){return x.n;}),backgroundColor:cp.map(function(_,i){return PIE[i%PIE.length];}),borderRadius:4}]},
-    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var cat=cp[ctx.dataIndex]?cp[ctx.dataIndex].c:'';var tot=d.filter(function(x){return(x.cat||'Sin categoría')===cat;}).reduce(function(a,x){return a+Number(x.monto);},0);return ' '+ctx.raw+' tratos · '+fmt(tot);}}}}}
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'}},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var cat=cp[ctx.dataIndex]?cp[ctx.dataIndex].c:'';var tot=d.filter(function(x){return(x.cat||'Sin categoría')===cat;}).reduce(function(a,x){return a+Number(x.monto);},0);return ' '+ctx.raw+' tratos · '+fmt(tot);}}}},
+    onClick:function(e,elements){if(!elements.length)return;var cat=cp[elements[0].index].c;var filtered=getFiltered().filter(function(x){return(x.cat||'Sin categoría')===cat;});openDrillDown(cat,filtered);},
+    onHover:function(e){e.native.target.style.cursor='pointer';}}
   });
 
   var reasons=['Proveedor alternativo','Desiste de la compra','Solo cotiza','Falta de stock','Precio muy alto','Sin respuesta'];
@@ -616,7 +666,9 @@ function renderDashboard(){
   charts['chartPerdida']=new Chart(document.getElementById('chartPerdida'),{
     type:'bar',
     data:{labels:reasons.map(function(r){return r.length>16?r.slice(0,16)+'…':r;}),datasets:[{data:rc,backgroundColor:rc.map(function(n){return n>0?'#ef4444':'#2a3347';}),borderRadius:4}]},
-    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'},min:0},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false}}}
+    options:{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#2a3347'},min:0},y:{ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:false}},
+    onClick:function(e,elements){if(!elements.length)return;var reason=reasons[elements[0].index];var filtered=getFiltered().filter(function(x){return x.razon_perdida===reason;});openDrillDown('Pérdida: '+reason,filtered);},
+    onHover:function(e){e.native.target.style.cursor='pointer';}}
   });
 }
 
