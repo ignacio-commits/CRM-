@@ -151,11 +151,6 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
 <div id="page-dashboard" class="page active">
   <div class="page-title">Dashboard</div>
   <div class="page-sub">Resumen general · Atakama</div>
-  <div class="gs-wrap">
-    <span class="gs-icon">🔍</span>
-    <input type="text" id="global-search" placeholder="Buscar cliente, empresa o RUT..." oninput="globalSearch(this.value)" onblur="setTimeout(hideGlobalResults,200)">
-    <div class="search-results" id="search-results"></div>
-  </div>
   <div class="filter-bar">
     <select id="db-periodo" onchange="renderDashboard()"><option value="all">Todo el tiempo</option></select>
     <select id="db-canal" onchange="renderDashboard()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
