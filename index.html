@@ -157,6 +157,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
     <div class="search-results" id="search-results"></div>
   </div>
   <div class="filter-bar">
+    <select id="db-periodo" onchange="renderDashboard()"><option value="all">Todo el tiempo</option></select>
     <select id="db-canal" onchange="renderDashboard()"><option value="all">Todos los canales</option><option>Corporativo</option><option>WS</option></select>
     <select id="db-resp" onchange="renderDashboard()"><option value="all">Todos los vendedores</option><option>Balta</option><option>Ignacio</option><option>Tomás</option></select>
     <select id="db-cat" onchange="renderDashboard()"><option value="all">Todas las categorías</option><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option></select>
@@ -474,6 +475,7 @@ async function loadAll(){
   res[1].forEach(function(h){if(!histMap[h.deal_id])histMap[h.deal_id]=[];histMap[h.deal_id].push(h);});
   prospects=Array.isArray(res[2])?res[2]:[];
   updateProspectBadge();
+  populatePeriodFilter();
 }
 
 function updateProspectBadge(){
@@ -507,11 +509,40 @@ function makePieChart(id,labels,data){
   });
 }
 
+function populatePeriodFilter(){
+  var sel=document.getElementById('db-periodo');
+  if(!sel)return;
+  var years={},months={};
+  deals.forEach(function(d){
+    var f=d.fecha_creado||d.fecha_ganado;
+    if(!f)return;
+    years[f.slice(0,4)]=true;
+    months[f.slice(0,7)]=true;
+  });
+  var MNAMES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var cur=sel.value;
+  var html='<option value="all">Todo el tiempo</option>';
+  Object.keys(years).sort().reverse().forEach(function(y){
+    html+='<option value="'+y+'">'+y+'</option>';
+  });
+  Object.keys(months).sort().reverse().forEach(function(m){
+    var p=m.split('-');
+    html+='<option value="'+m+'">'+MNAMES[parseInt(p[1])-1]+' '+p[0]+'</option>';
+  });
+  sel.innerHTML=html;
+  if(cur)sel.value=cur;
+}
+
 function getFiltered(){
   var canal=(document.getElementById('db-canal')||{}).value||'all';
   var resp=(document.getElementById('db-resp')||{}).value||'all';
   var cat=(document.getElementById('db-cat')||{}).value||'all';
-  return deals.filter(function(d){return(canal==='all'||d.canal===canal)&&(resp==='all'||d.resp===resp)&&(cat==='all'||d.cat===cat);});
+  var periodo=(document.getElementById('db-periodo')||{}).value||'all';
+  return deals.filter(function(d){
+    var f=d.fecha_creado||'';
+    var dateOk=periodo==='all'||f.startsWith(periodo);
+    return dateOk&&(canal==='all'||d.canal===canal)&&(resp==='all'||d.resp===resp)&&(cat==='all'||d.cat===cat);
+  });
 }
 
 function renderDashboard(){
