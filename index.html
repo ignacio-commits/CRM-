@@ -366,6 +366,32 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
   </div>
 </div>
 
+<!-- MODAL EDITAR PROSPECTO -->
+<div class="modal-bg" id="modal-edit-prospect">
+  <div class="modal" style="width:580px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin-bottom:0">✏️ Editar Prospecto</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit-prospect')">Cancelar</button>
+        <button class="btn btn-danger btn-sm" id="ep-del-btn">🗑 Eliminar</button>
+        <button class="btn btn-success btn-sm" onclick="saveEditProspect()">💾 Guardar</button>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre *</label><input type="text" id="ep-nombre"></div>
+      <div class="form-group full"><label>Empresa</label><input type="text" id="ep-empresa"></div>
+      <div class="form-group"><label>RUT</label><input type="text" id="ep-rut"></div>
+      <div class="form-group"><label>Celular</label><input type="text" id="ep-celular"></div>
+      <div class="form-group full"><label>Email</label><input type="text" id="ep-email"></div>
+      <div class="form-group full"><label>Mensaje / Comentario</label><textarea id="ep-comentario"></textarea></div>
+      <div class="form-group full" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="ep-revisado" style="width:auto">
+        <label style="margin:0">Marcado como revisado</label>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NUEVO PROSPECTO -->
 <div class="modal-bg" id="modal-new-prospect">
   <div class="modal" style="width:580px">
@@ -889,6 +915,7 @@ function renderProspects(){
         '<td style="font-size:11px;color:var(--text2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.comentario||'-')+'</td>'+
         '<td>'+(p.revisado?'<span style="color:var(--text3);font-size:11px">Revisado</span>':'<span style="color:var(--green);font-size:11px">● Nuevo</span>')+'</td>'+
         '<td style="display:flex;gap:6px">'+
+          '<button class="btn btn-secondary btn-sm" onclick="openEditProspect('+p.id+')">✏️</button>'+
           '<button class="btn btn-primary btn-sm" onclick="openConvertProspect('+p.id+')">🎯 Convertir</button>'+
           (!p.revisado?'<button class="btn btn-secondary btn-sm" onclick="markReviewed('+p.id+')">✓</button>':'')+
         '</td>'+
@@ -896,6 +923,45 @@ function renderProspects(){
     });
   }
   document.getElementById('pros-tbody').innerHTML=html;
+}
+
+function openEditProspect(id){
+  var p=null;for(var i=0;i<prospects.length;i++){if(prospects[i].id===id){p=prospects[i];break;}}if(!p)return;
+  document.getElementById('ep-nombre').value=p.nombre||'';
+  document.getElementById('ep-empresa').value=p.empresa||'';
+  document.getElementById('ep-rut').value=p.rut||'';
+  document.getElementById('ep-celular').value=p.celular||'';
+  document.getElementById('ep-email').value=p.email||'';
+  document.getElementById('ep-comentario').value=p.comentario||'';
+  document.getElementById('ep-revisado').checked=!!p.revisado;
+  document.getElementById('ep-del-btn').onclick=function(){if(confirm('¿Eliminar este prospecto?'))deleteProspect(id);};
+  document.getElementById('modal-edit-prospect').dataset.id=id;
+  document.getElementById('modal-edit-prospect').classList.add('show');
+}
+
+async function saveEditProspect(){
+  var id=parseInt(document.getElementById('modal-edit-prospect').dataset.id);
+  var nombre=document.getElementById('ep-nombre').value.trim();
+  if(!nombre){alert('Ingresa el nombre');return;}
+  setSyncState('loading','Guardando...');
+  await sbPatch('prospects',id,{
+    nombre:nombre.toUpperCase(),
+    empresa:document.getElementById('ep-empresa').value,
+    rut:document.getElementById('ep-rut').value,
+    celular:document.getElementById('ep-celular').value,
+    email:document.getElementById('ep-email').value,
+    comentario:document.getElementById('ep-comentario').value,
+    revisado:document.getElementById('ep-revisado').checked
+  });
+  await loadAll();setSyncState('ok','Conectado');showToast('✅ Prospecto actualizado');
+  closeModal('modal-edit-prospect');renderProspects();
+}
+
+async function deleteProspect(id){
+  setSyncState('loading','Eliminando...');
+  await sbDelete('prospects',id);
+  await loadAll();setSyncState('ok','Conectado');
+  showToast('🗑 Prospecto eliminado');closeModal('modal-edit-prospect');renderProspects();
 }
 
 function openNewProspect(){
