@@ -224,6 +224,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
       <input type="text" id="pros-search" placeholder="🔍 Buscar..." style="width:190px" oninput="renderProspects()">
       <select id="pros-filter" onchange="renderProspects()"><option value="all">Todos</option><option value="new">Solo nuevos</option><option value="reviewed">Revisados</option></select>
       <span id="pros-count" style="font-size:12px;color:var(--text3)"></span>
+      <button class="btn btn-primary" onclick="openNewProspect()">+ Nuevo Prospecto</button>
     </div>
     <table><thead><tr><th>Fecha</th><th>Nombre</th><th>Empresa</th><th>RUT</th><th>Email</th><th>Celular</th><th>Mensaje</th><th>Estado</th><th>Acciones</th></tr></thead>
     <tbody id="pros-tbody"></tbody></table>
@@ -362,6 +363,28 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-drill')">✕ Cerrar</button>
     </div>
     <div id="drill-body"></div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO PROSPECTO -->
+<div class="modal-bg" id="modal-new-prospect">
+  <div class="modal" style="width:580px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin-bottom:0">📥 Nuevo Prospecto</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-new-prospect')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre *</label><input type="text" id="np-nombre" placeholder="Nombre del contacto"></div>
+      <div class="form-group full"><label>Empresa</label><input type="text" id="np-empresa" placeholder="Nombre de la empresa"></div>
+      <div class="form-group"><label>RUT</label><input type="text" id="np-rut" placeholder="76.xxx.xxx-x"></div>
+      <div class="form-group"><label>Celular</label><input type="text" id="np-celular" placeholder="+56 9 xxxx xxxx"></div>
+      <div class="form-group full"><label>Email</label><input type="text" id="np-email" placeholder="contacto@empresa.cl"></div>
+      <div class="form-group full"><label>Mensaje / Comentario</label><textarea id="np-comentario" placeholder="Contexto del prospecto..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-new-prospect')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNewProspect()">💾 Guardar Prospecto</button>
+    </div>
   </div>
 </div>
 
@@ -873,6 +896,31 @@ function renderProspects(){
     });
   }
   document.getElementById('pros-tbody').innerHTML=html;
+}
+
+function openNewProspect(){
+  ['np-nombre','np-empresa','np-rut','np-celular','np-email','np-comentario'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('modal-new-prospect').classList.add('show');
+}
+
+async function saveNewProspect(){
+  var nombre=document.getElementById('np-nombre').value.trim();
+  if(!nombre){alert('Ingresa el nombre del prospecto');return;}
+  setSyncState('loading','Guardando...');
+  await sbPost('prospects',{
+    nombre:nombre.toUpperCase(),
+    empresa:document.getElementById('np-empresa').value,
+    rut:document.getElementById('np-rut').value,
+    celular:document.getElementById('np-celular').value,
+    email:document.getElementById('np-email').value,
+    comentario:document.getElementById('np-comentario').value,
+    revisado:false
+  });
+  await loadAll();
+  setSyncState('ok','Conectado');
+  showToast('✅ Prospecto creado');
+  closeModal('modal-new-prospect');
+  renderProspects();
 }
 
 function openConvertProspect(id){
