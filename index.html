@@ -25,7 +25,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);di
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
 .sync-dot.error{background:var(--red)}.sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-#main{flex:1;overflow:auto;padding:24px}
+#main{flex:1;overflow:auto;padding:16px 16px 24px}
 .page{display:none}.page.active{display:block}
 .page-title{font-size:20px;font-weight:700;margin-bottom:4px}
 .page-sub{color:var(--text3);font-size:12px;margin-bottom:16px}
@@ -55,28 +55,28 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);di
 .cr3{grid-template-columns:1fr 1fr 1fr}.cr2{grid-template-columns:1.8fr 1fr}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
 .chart-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
-.funnel-wrap{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.funnel-col{background:var(--card);border:1px solid var(--border);border-radius:10px;min-height:500px;display:flex;flex-direction:column}
-.funnel-header{padding:10px 12px;border-bottom:1px solid var(--border)}
-.fh-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
-.funnel-header h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-.stage-count{background:var(--card2);border-radius:20px;padding:2px 7px;font-size:10px;color:var(--text2)}
-.stage-total{font-size:10px;color:var(--text3)}
-.funnel-cards{padding:8px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px}
-.deal-card{background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:9px;cursor:pointer;transition:.15s;user-select:none}
+.funnel-wrap{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.funnel-col{background:var(--card);border:1px solid var(--border);border-radius:10px;min-height:500px;display:flex;flex-direction:column;min-width:0}
+.funnel-header{padding:7px 9px;border-bottom:1px solid var(--border)}
+.fh-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.funnel-header h3{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.stage-count{background:var(--card2);border-radius:20px;padding:1px 6px;font-size:9px;color:var(--text2)}
+.stage-total{font-size:9px;color:var(--text3)}
+.funnel-cards{padding:6px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
+.deal-card{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:7px;cursor:pointer;transition:.15s;user-select:none}
 .deal-card:hover{border-color:var(--accent);transform:translateY(-1px)}
 .deal-card.stale{border-left:3px solid var(--red)!important}
 .deal-card.no-date{border-left:3px solid var(--orange)}
 .deal-card.no-amount{border-left:3px solid var(--purple)}
-.deal-name{font-size:11px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.deal-amt{font-size:11px;font-weight:600}
+.deal-name{font-size:10px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-amt{font-size:10px;font-weight:600}
 .deal-amt.has{color:var(--accent)}.deal-amt.none{color:var(--text3)}
-.deal-meta{display:flex;justify-content:space-between;margin-top:5px;align-items:center;flex-wrap:wrap;gap:3px}
-.deal-resp{font-size:10px;color:var(--text3)}
-.deal-tags{display:flex;gap:3px;flex-wrap:wrap}
-.tag{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500}
+.deal-meta{display:flex;justify-content:space-between;margin-top:4px;align-items:center;flex-wrap:wrap;gap:2px}
+.deal-resp{font-size:9px;color:var(--text3)}
+.deal-tags{display:flex;gap:2px;flex-wrap:wrap}
+.tag{font-size:8px;padding:1px 4px;border-radius:3px;font-weight:500}
 .tag-corp{background:#1e3a5f;color:#60a5fa}.tag-ws{background:#2d1b69;color:#c4b5fd}.tag-stale{background:#450a0a;color:#f87171}
-.deal-next{font-size:9px;color:var(--yellow);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-next{font-size:8px;color:var(--yellow);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .col-contactado .funnel-header h3{color:#60a5fa}.col-catalogo .funnel-header h3{color:#a78bfa}
 .col-cotizacion .funnel-header h3{color:var(--yellow)}.col-negociacion .funnel-header h3{color:var(--orange)}
 .col-ganado .funnel-header h3{color:var(--green)}.col-perdido .funnel-header h3{color:var(--red)}
