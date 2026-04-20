@@ -1172,8 +1172,15 @@ function hideClienteSuggest(){var el=document.getElementById('cliente-suggest');
 
 function resetNewForm(){
   ['nf-cliente','nf-empresa','nf-rut','nf-celular','nf-email','nf-monto','nf-comentario','nf-next'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('nf-fecha').value=today();
+  var nfFecha=document.getElementById('nf-fecha');if(nfFecha)nfFecha.value=today();
   document.getElementById('nf-nextdate').value='';
+  document.getElementById('nf-canal').value='Corporativo';
+  document.getElementById('nf-cat').value='Hotel';
+  document.getElementById('nf-resp').value='Balta';
+  document.getElementById('nf-estado').value='Contactado';
+  document.getElementById('nf-fuente').value='';
+  var es=document.getElementById('empresa-suggest');if(es)es.style.display='none';
+  var cs=document.getElementById('cliente-suggest');if(cs)cs.style.display='none';
 }
 
 async function saveDeal(){
