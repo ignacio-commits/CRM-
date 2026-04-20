@@ -553,6 +553,33 @@ var pctPlugin={id:'pctLabels',afterDatasetsDraw:function(chart){
   });
 }};
 
+function openPipelineDrill(){
+  var act=getActivePipeline();
+  act.sort(function(a,b){return Number(b.monto)-Number(a.monto);});
+  var pipe=act.reduce(function(a,x){return a+Number(x.monto);},0);
+  document.getElementById('drill-title').textContent='Pipeline Activo · '+act.length+' tratos · '+fmt(pipe);
+  var html='';
+  if(!act.length){
+    html='<p style="color:var(--text3);padding:12px 0">No hay tratos activos.</p>';
+  } else {
+    html='<table><thead><tr><th>Cliente</th><th>Resp.</th><th>Canal</th><th>Etapa</th><th>Monto</th><th>Próxima Acción</th><th></th></tr></thead><tbody>';
+    act.forEach(function(d){
+      html+='<tr>'+
+        '<td style="font-weight:600;color:var(--accent)">'+d.cliente+(d.empresa?'<div style="font-size:10px;color:var(--text3)">'+d.empresa+'</div>':'')+'</td>'+
+        '<td style="font-size:11px">'+d.resp+'</td>'+
+        '<td><span class="tag '+(d.canal==='WS'?'tag-ws':'tag-corp')+'">'+d.canal+'</span></td>'+
+        '<td><span class="badge '+badgeClass(d.estado)+'">'+d.estado+'</span></td>'+
+        '<td style="font-weight:600">'+(Number(d.monto)>0?fmt(d.monto):'<span style="color:var(--text3)">-</span>')+'</td>'+
+        '<td style="font-size:11px;color:var(--yellow);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(d.next_action||'<span style="color:var(--text3)">-</span>')+'</td>'+
+        '<td><button class="btn btn-secondary btn-sm" onclick="closeModal(\'modal-drill\');openEdit('+d.id+')">✏️</button></td>'+
+        '</tr>';
+    });
+    html+='</tbody></table>';
+  }
+  document.getElementById('drill-body').innerHTML=html;
+  document.getElementById('modal-drill').classList.add('show');
+}
+
 function openConversionDrill(){
   var d=getFiltered();
   var gan=d.filter(function(x){return x.estado==='Trato ganado';});
@@ -696,11 +723,21 @@ function getFiltered(){
   });
 }
 
+function getActivePipeline(){
+  var canal=(document.getElementById('db-canal')||{}).value||'all';
+  var resp=(document.getElementById('db-resp')||{}).value||'all';
+  var cat=(document.getElementById('db-cat')||{}).value||'all';
+  return deals.filter(function(d){
+    return d.estado!=='Trato ganado'&&d.estado!=='Trato perdido'&&
+      (canal==='all'||d.canal===canal)&&(resp==='all'||d.resp===resp)&&(cat==='all'||d.cat===cat);
+  });
+}
+
 function renderDashboard(){
   var d=getFiltered();
   var gan=d.filter(function(x){return x.estado==='Trato ganado';});
   var per=d.filter(function(x){return x.estado==='Trato perdido';});
-  var act=d.filter(function(x){return x.estado!=='Trato ganado'&&x.estado!=='Trato perdido';});
+  var act=getActivePipeline();
   var tG=gan.reduce(function(a,x){return a+Number(x.monto);},0);
   var aov=gan.length?Math.round(tG/gan.length):0;
   var lts=gan.filter(function(x){return x.lifetime>0;}).map(function(x){return x.lifetime;});
@@ -711,7 +748,7 @@ function renderDashboard(){
 
   document.getElementById('kpi-grid').innerHTML=
     '<div class="kpi green" style="cursor:pointer" onclick="openDrillDown(\'Ventas Realizadas\',getFiltered().filter(function(x){return x.estado===\'Trato ganado\';}))"><div class="kpi-label">Venta Realizada</div><div class="kpi-val">'+fmt(tG)+'</div><div class="kpi-sub">'+gan.length+' tratos ganados</div></div>'+
-    '<div class="kpi blue"><div class="kpi-label">Pipeline Activo</div><div class="kpi-val">'+fmt(pipe)+'</div><div class="kpi-sub">'+act.length+' tratos abiertos</div></div>'+
+    '<div class="kpi blue" style="cursor:pointer" onclick="openPipelineDrill()"><div class="kpi-label">Pipeline Activo</div><div class="kpi-val">'+fmt(pipe)+'</div><div class="kpi-sub">'+act.length+' tratos abiertos</div></div>'+
     '<div class="kpi yellow"><div class="kpi-label">AOV</div><div class="kpi-val">'+fmt(aov)+'</div><div class="kpi-sub">Ticket promedio ganados</div></div>'+
     '<div class="kpi purple" style="cursor:pointer" onclick="openDuracionDrill()"><div class="kpi-label">Duración Prom.</div><div class="kpi-val">'+dur+' días</div><div class="kpi-sub">Creación → Cierre</div></div>'+
     '<div class="kpi" style="cursor:pointer" onclick="openConversionDrill()"><div class="kpi-label">Conversión</div><div class="kpi-val">'+conv+'%</div><div class="kpi-sub">Cotizados → Ganados</div></div>'+
