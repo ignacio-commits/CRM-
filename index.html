@@ -654,7 +654,7 @@ function renderDashboard(){
   var pipe=act.reduce(function(a,x){return a+Number(x.monto);},0);
 
   document.getElementById('kpi-grid').innerHTML=
-    '<div class="kpi green" style="cursor:pointer" onclick="openDrillDown(\'Ventas Realizadas\',deals.filter(function(x){return x.estado===\'Trato ganado\';}))"><div class="kpi-label">Venta Realizada</div><div class="kpi-val">'+fmt(tG)+'</div><div class="kpi-sub">'+gan.length+' tratos ganados</div></div>'+
+    '<div class="kpi green" style="cursor:pointer" onclick="openDrillDown(\'Ventas Realizadas\',getFiltered().filter(function(x){return x.estado===\'Trato ganado\';}))"><div class="kpi-label">Venta Realizada</div><div class="kpi-val">'+fmt(tG)+'</div><div class="kpi-sub">'+gan.length+' tratos ganados</div></div>'+
     '<div class="kpi blue"><div class="kpi-label">Pipeline Activo</div><div class="kpi-val">'+fmt(pipe)+'</div><div class="kpi-sub">'+act.length+' tratos abiertos</div></div>'+
     '<div class="kpi yellow"><div class="kpi-label">AOV</div><div class="kpi-val">'+fmt(aov)+'</div><div class="kpi-sub">Ticket promedio ganados</div></div>'+
     '<div class="kpi purple"><div class="kpi-label">Duración Prom.</div><div class="kpi-val">'+dur+' días</div><div class="kpi-sub">Creación → Cierre</div></div>'+
