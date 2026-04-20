@@ -559,12 +559,13 @@ function openDuracionDrill(){
   var conFecha=gan.filter(function(x){return x.lifetime>0;});
   var avg=conFecha.length?(conFecha.reduce(function(a,x){return a+x.lifetime;},0)/conFecha.length).toFixed(1):0;
   document.getElementById('drill-title').textContent='Duración por Trato · Prom: '+avg+' días';
-  var html='<table><thead><tr><th>Cliente</th><th>Resp.</th><th>Fecha Creado</th><th>Fecha Ganado</th><th style="text-align:right">Días</th><th></th></tr></thead><tbody>';
+  var html='<table><thead><tr><th>Cliente</th><th>Resp.</th><th>Monto</th><th>Fecha Creado</th><th>Fecha Ganado</th><th style="text-align:right">Días</th><th></th></tr></thead><tbody>';
   gan.forEach(function(d){
     var color=d.lifetime>30?'var(--red)':d.lifetime>14?'var(--yellow)':d.lifetime>0?'var(--green)':'var(--text3)';
     html+='<tr>'+
       '<td style="font-weight:600;color:var(--accent)">'+d.cliente+(d.empresa?'<div style="font-size:10px;color:var(--text3)">'+d.empresa+'</div>':'')+'</td>'+
       '<td style="font-size:11px">'+d.resp+'</td>'+
+      '<td style="font-weight:600;color:var(--accent)">'+(Number(d.monto)>0?fmt(d.monto):'<span style="color:var(--text3)">-</span>')+'</td>'+
       '<td style="font-size:11px;color:var(--text2)">'+(d.fecha_creado||'-')+'</td>'+
       '<td style="font-size:11px;color:var(--text2)">'+(d.fecha_ganado||'-')+'</td>'+
       '<td style="text-align:right;font-weight:700;color:'+color+'">'+(d.lifetime>0?d.lifetime+'d':'sin fecha')+'</td>'+
