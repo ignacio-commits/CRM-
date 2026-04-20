@@ -604,7 +604,7 @@ function populatePeriodFilter(){
   if(!sel)return;
   var years={},months={};
   deals.forEach(function(d){
-    var f=d.fecha_creado;
+    var f=d.fecha_creado||d.fecha_ganado||d.fecha_perdido;
     if(!f)return;
     years[f.slice(0,4)]=true;
     months[f.slice(0,7)]=true;
@@ -629,8 +629,13 @@ function getFiltered(){
   var cat=(document.getElementById('db-cat')||{}).value||'all';
   var periodo=(document.getElementById('db-periodo')||{}).value||'all';
   return deals.filter(function(d){
-    var f=d.fecha_creado||'';
-    var dateOk=periodo==='all'||f.startsWith(periodo);
+    var dateOk=true;
+    if(periodo!=='all'){
+      var f=d.estado==='Trato ganado'?(d.fecha_ganado||d.fecha_creado||''):
+            d.estado==='Trato perdido'?(d.fecha_perdido||d.fecha_creado||''):
+            (d.fecha_creado||'');
+      dateOk=f.startsWith(periodo);
+    }
     return dateOk&&(canal==='all'||d.canal===canal)&&(resp==='all'||d.resp===resp)&&(cat==='all'||d.cat===cat);
   });
 }
