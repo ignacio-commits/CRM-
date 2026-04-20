@@ -256,7 +256,6 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
       <div class="form-group"><label>Monto ($)</label><input type="number" id="nf-monto" placeholder="0"></div>
       <div class="form-group"><label>Estado inicial</label><select id="nf-estado"><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option></select></div>
       <div class="form-group"><label>Canal de Fuente</label><select id="nf-fuente"><option value="">Sin especificar</option><option>Cliente Antiguo</option><option>Prospecto</option><option>Correo Atakama</option><option>Referido</option><option>Formulario Web</option></select></div>
-      <div class="form-group"><label>Fecha Creado</label><input type="date" id="nf-fecha"></div>
       <div class="form-group"><label>Fecha Próxima Acción</label><input type="date" id="nf-nextdate"></div>
       <div class="form-group full"><label>Próxima Acción</label><input type="text" id="nf-next"></div>
       <div class="form-group full"><label>Comentario</label><textarea id="nf-comentario"></textarea></div>
@@ -1182,7 +1181,7 @@ async function saveDeal(){
   if(!cliente){alert('Ingresa el nombre del cliente');return;}
   var estado=document.getElementById('nf-estado').value;
   setSyncState('loading','Guardando...');
-  var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('nf-empresa').value,rut:document.getElementById('nf-rut').value,celular:document.getElementById('nf-celular').value,email:document.getElementById('nf-email').value,canal:document.getElementById('nf-canal').value,cat:document.getElementById('nf-cat').value,fuente:document.getElementById('nf-fuente').value,resp:document.getElementById('nf-resp').value,monto:parseFloat(document.getElementById('nf-monto').value)||0,estado:estado,lifetime:0,fecha_creado:document.getElementById('nf-fecha').value||null,fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('nf-comentario').value,next_action:document.getElementById('nf-next').value,next_date:document.getElementById('nf-nextdate').value||null,razon_perdida:''});
+  var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('nf-empresa').value,rut:document.getElementById('nf-rut').value,celular:document.getElementById('nf-celular').value,email:document.getElementById('nf-email').value,canal:document.getElementById('nf-canal').value,cat:document.getElementById('nf-cat').value,fuente:document.getElementById('nf-fuente').value,resp:document.getElementById('nf-resp').value,monto:parseFloat(document.getElementById('nf-monto').value)||0,estado:estado,lifetime:0,fecha_creado:today(),fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('nf-comentario').value,next_action:document.getElementById('nf-next').value,next_date:document.getElementById('nf-nextdate').value||null,razon_perdida:''});
   if(Array.isArray(rows)&&rows[0])await sbPost('history',{deal_id:rows[0].id,fecha:today(),texto:'Trato creado · '+estado});
   await loadAll();setSyncState('ok','Conectado');showToast('✅ Trato creado');showPage('deals');
 }
