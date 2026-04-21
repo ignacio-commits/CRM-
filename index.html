@@ -764,7 +764,6 @@ function renderDashboard(){
       '<div class="canal-stat"><span>Tratos ganados</span><span style="color:var(--green)">'+cg.length+'</span></div>'+
       '<div class="canal-stat"><span>Conversión</span><span>'+(cc.length?Math.round(cg.length/cc.length*100):0)+'%</span></div>'+
       '<div class="canal-stat"><span>Vol. ganado</span><span>'+fmt(cg.reduce(function(a,x){return a+Number(x.monto);},0))+'</span></div>'+
-      '<div class="canal-stat"><span>Vol. cotizado</span><span>'+fmt(cd.filter(function(x){return x.estado==='Cotización enviada';}).reduce(function(a,x){return a+Number(x.monto);},0))+'</span></div>'+
       '<div class="canal-stat"><span>AOV</span><span>'+fmt(aovC)+'</span></div></div>';
   }).join('');
 
