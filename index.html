@@ -325,6 +325,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
       <div class="form-group"><label>Categoría</label><select id="pf-cat"><option>Hotel</option><option>Consumo Masivo</option><option>Banco</option><option>RRHH</option><option>Operador Turístico</option><option>Organización</option><option>Marketing</option><option>Logística</option><option>Energía</option><option>Persona Natural</option><option>Viña</option><option>Otro</option></select></div>
       <div class="form-group"><label>Responsable</label><select id="pf-resp"><option>Balta</option><option>Ignacio</option><option>Tomás</option></select></div>
       <div class="form-group"><label>Monto estimado ($)</label><input type="number" id="pf-monto" placeholder="0"></div>
+      <div class="form-group"><label>Etapa del Embudo</label><select id="pf-estado"><option>Contactado</option><option>Catálogo enviado</option><option>Cotización enviada</option><option>Negociación</option></select></div>
       <div class="form-group full"><label>Comentario</label><textarea id="pf-comentario"></textarea></div>
     </div>
     <div class="modal-footer">
@@ -1103,7 +1104,7 @@ async function convertProspect(){
   var cliente=document.getElementById('pf-cliente').value.trim();
   if(!cliente){alert('Ingresa el nombre del cliente');return;}
   setSyncState('loading','Guardando...');
-  var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('pf-empresa').value,rut:document.getElementById('pf-rut').value,celular:document.getElementById('pf-celular').value,email:document.getElementById('pf-email').value,canal:document.getElementById('pf-canal').value,cat:document.getElementById('pf-cat').value,fuente:'Formulario Web',resp:document.getElementById('pf-resp').value,monto:parseFloat(document.getElementById('pf-monto').value)||0,estado:'Contactado',lifetime:0,fecha_creado:today(),fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('pf-comentario').value,next_action:'',next_date:null,razon_perdida:''});
+  var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('pf-empresa').value,rut:document.getElementById('pf-rut').value,celular:document.getElementById('pf-celular').value,email:document.getElementById('pf-email').value,canal:document.getElementById('pf-canal').value,cat:document.getElementById('pf-cat').value,fuente:'Formulario Web',resp:document.getElementById('pf-resp').value,monto:parseFloat(document.getElementById('pf-monto').value)||0,estado:document.getElementById('pf-estado').value,lifetime:0,fecha_creado:today(),fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('pf-comentario').value,next_action:'',next_date:null,razon_perdida:''});
   if(Array.isArray(rows)&&rows[0])await sbPost('history',{deal_id:rows[0].id,fecha:today(),texto:'Trato creado desde formulario web'});
   if(convertingId)await sbPatch('prospects',convertingId,{revisado:true});
   await loadAll();setSyncState('ok','Conectado');showToast('✅ Prospecto convertido a trato');closeModal('modal-prospect');showPage('deals');
