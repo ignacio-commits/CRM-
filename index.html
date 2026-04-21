@@ -1106,7 +1106,7 @@ async function convertProspect(){
   setSyncState('loading','Guardando...');
   var rows=await sbPost('deals',{cliente:cliente.toUpperCase(),empresa:document.getElementById('pf-empresa').value,rut:document.getElementById('pf-rut').value,celular:document.getElementById('pf-celular').value,email:document.getElementById('pf-email').value,canal:document.getElementById('pf-canal').value,cat:document.getElementById('pf-cat').value,fuente:'Formulario Web',resp:document.getElementById('pf-resp').value,monto:parseFloat(document.getElementById('pf-monto').value)||0,estado:document.getElementById('pf-estado').value,lifetime:0,fecha_creado:today(),fecha_ganado:null,fecha_perdido:null,comentario:document.getElementById('pf-comentario').value,next_action:'',next_date:null,razon_perdida:''});
   if(Array.isArray(rows)&&rows[0])await sbPost('history',{deal_id:rows[0].id,fecha:today(),texto:'Trato creado desde formulario web'});
-  if(convertingId)await sbPatch('prospects',convertingId,{revisado:true});
+  if(convertingId)await sbDelete('prospects',convertingId);
   await loadAll();setSyncState('ok','Conectado');showToast('✅ Prospecto convertido a trato');closeModal('modal-prospect');showPage('deals');
 }
 
