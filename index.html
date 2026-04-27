@@ -823,7 +823,7 @@ function renderFunnel(){
   var html='';
   for(var si=0;si<stages.length;si++){
     var s=stages[si];
-    var items=d.filter(function(x){return x.estado===s.key;}).sort(function(a,b){if(!a.fecha_creado&&!b.fecha_creado)return 0;if(!a.fecha_creado)return 1;if(!b.fecha_creado)return -1;return new Date(b.fecha_creado)-new Date(a.fecha_creado);});
+    var items=d.filter(function(x){return x.estado===s.key;}).sort(function(a,b){return Number(b.monto||0)-Number(a.monto||0);});
     var total=items.reduce(function(a,x){return a+Number(x.monto);},0);
     var cards='';
     for(var ci=0;ci<items.length;ci++){
