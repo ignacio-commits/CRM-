@@ -553,6 +553,38 @@ var pctPlugin={id:'pctLabels',afterDatasetsDraw:function(chart){
   });
 }};
 
+function openVentasDrill(){
+  var gan=getFiltered().filter(function(x){return x.estado==='Trato ganado';});
+  gan.sort(function(a,b){
+    if(!a.fecha_ganado&&!b.fecha_ganado)return 0;
+    if(!a.fecha_ganado)return 1;
+    if(!b.fecha_ganado)return -1;
+    return new Date(b.fecha_ganado)-new Date(a.fecha_ganado);
+  });
+  var total=gan.reduce(function(a,x){return a+Number(x.monto);},0);
+  document.getElementById('drill-title').textContent='Ventas Realizadas · '+gan.length+' trato(s)';
+  var html='';
+  if(!gan.length){
+    html='<p style="color:var(--text3);padding:12px 0">No hay ventas en este período.</p>';
+  } else {
+    html='<table><thead><tr><th>Cliente</th><th>Resp.</th><th>Canal</th><th>Fecha Ganado</th><th>Monto</th><th></th></tr></thead><tbody>';
+    gan.forEach(function(d){
+      html+='<tr>'+
+        '<td style="font-weight:600;color:var(--accent)">'+d.cliente+(d.empresa?'<div style="font-size:10px;color:var(--text3)">'+d.empresa+'</div>':'')+'</td>'+
+        '<td style="font-size:11px">'+d.resp+'</td>'+
+        '<td><span class="tag '+(d.canal==='WS'?'tag-ws':'tag-corp')+'">'+d.canal+'</span></td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+(d.fecha_ganado||'<span style="color:var(--text3)">-</span>')+'</td>'+
+        '<td style="font-weight:600;color:var(--accent)">'+(Number(d.monto)>0?fmt(d.monto):'<span style="color:var(--text3)">-</span>')+'</td>'+
+        '<td><button class="btn btn-secondary btn-sm" onclick="closeModal(\'modal-drill\');openEdit('+d.id+')">✏️</button></td>'+
+        '</tr>';
+    });
+    html+='</tbody></table>';
+    html+='<div style="text-align:right;padding:10px 12px 0;font-size:12px;color:var(--text2)">Total: <strong style="color:var(--accent)">'+fmt(total)+'</strong></div>';
+  }
+  document.getElementById('drill-body').innerHTML=html;
+  document.getElementById('modal-drill').classList.add('show');
+}
+
 function openPipelineDrill(){
   var act=getActivePipeline();
   act.sort(function(a,b){return Number(b.monto)-Number(a.monto);});
@@ -747,7 +779,7 @@ function renderDashboard(){
   var pipe=act.reduce(function(a,x){return a+Number(x.monto);},0);
 
   document.getElementById('kpi-grid').innerHTML=
-    '<div class="kpi green" style="cursor:pointer" onclick="openDrillDown(\'Ventas Realizadas\',getFiltered().filter(function(x){return x.estado===\'Trato ganado\';}))"><div class="kpi-label">Venta Realizada</div><div class="kpi-val">'+fmt(tG)+'</div><div class="kpi-sub">'+gan.length+' tratos ganados</div></div>'+
+    '<div class="kpi green" style="cursor:pointer" onclick="openVentasDrill()"><div class="kpi-label">Venta Realizada</div><div class="kpi-val">'+fmt(tG)+'</div><div class="kpi-sub">'+gan.length+' tratos ganados</div></div>'+
     '<div class="kpi blue" style="cursor:pointer" onclick="openPipelineDrill()"><div class="kpi-label">Pipeline Activo</div><div class="kpi-val">'+fmt(pipe)+'</div><div class="kpi-sub">'+act.length+' tratos abiertos</div></div>'+
     '<div class="kpi yellow"><div class="kpi-label">AOV</div><div class="kpi-val">'+fmt(aov)+'</div><div class="kpi-sub">Ticket promedio ganados</div></div>'+
     '<div class="kpi purple" style="cursor:pointer" onclick="openDuracionDrill()"><div class="kpi-label">Duración Prom.</div><div class="kpi-val">'+dur+' días</div><div class="kpi-sub">Creación → Cierre</div></div>'+
