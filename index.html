@@ -717,22 +717,29 @@ function makePieChart(id,labels,data,fieldFn){
 function populatePeriodFilter(){
   var sel=document.getElementById('db-periodo');
   if(!sel)return;
-  var years={},months={};
-  deals.forEach(function(d){
-    var f=d.fecha_creado||d.fecha_ganado||d.fecha_perdido;
-    if(!f)return;
-    years[f.slice(0,4)]=true;
-    months[f.slice(0,7)]=true;
-  });
   var MNAMES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   var cur=sel.value;
+  var now=new Date();
+  var curYear=now.getFullYear();
+  var curMonth=now.getMonth(); // 0-based
+  // Años con datos + año actual
+  var years={};
+  years[curYear]=true;
+  years[curYear-1]=true;
+  deals.forEach(function(d){
+    var f=d.fecha_creado||d.fecha_ganado||d.fecha_perdido;
+    if(f)years[f.slice(0,4)]=true;
+  });
   var html='<option value="all">Todo el tiempo</option>';
+  // Años de mayor a menor
   Object.keys(years).sort().reverse().forEach(function(y){
     html+='<option value="'+y+'">'+y+'</option>';
-  });
-  Object.keys(months).sort().reverse().forEach(function(m){
-    var p=m.split('-');
-    html+='<option value="'+m+'">'+MNAMES[parseInt(p[1])-1]+' '+p[0]+'</option>';
+    // Meses: si es año actual, hasta mes actual; si es anterior, los 12
+    var maxM=(parseInt(y)===curYear)?curMonth:11;
+    for(var m=maxM;m>=0;m--){
+      var mm=(m+1<10?'0':'')+(m+1);
+      html+='<option value="'+y+'-'+mm+'">'+MNAMES[m]+' '+y+'</option>';
+    }
   });
   sel.innerHTML=html;
   if(cur)sel.value=cur;
