@@ -159,6 +159,10 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--card2)}
   </div>
   <div class="kpi-grid" id="kpi-grid"></div>
   <div class="canal-split" id="canal-split"></div>
+  <div class="chart-card" style="margin-bottom:14px">
+    <div class="chart-title" id="monthly-chart-title">Ventas por Mes</div>
+    <canvas id="chartMensual" height="90"></canvas>
+  </div>
   <div class="charts-row cr3">
     <div class="chart-card"><div class="chart-title">Distribución por Estado</div><canvas id="chartEstado" height="180"></canvas></div>
     <div class="chart-card"><div class="chart-title">Tratos por Vendedor</div><canvas id="chartVendedor" height="180"></canvas></div>
@@ -772,6 +776,52 @@ function getActivePipeline(){
   });
 }
 
+function renderMonthlyChart(){
+  var canal=(document.getElementById('db-canal')||{}).value||'all';
+  var resp=(document.getElementById('db-resp')||{}).value||'all';
+  var cat=(document.getElementById('db-cat')||{}).value||'all';
+  var periodo=(document.getElementById('db-periodo')||{}).value||'all';
+  var MNAMES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  // Determinar año a mostrar
+  var year=new Date().getFullYear();
+  if(periodo&&periodo!=='all'&&periodo.length===4)year=parseInt(periodo);
+  else if(periodo&&periodo.length===7)year=parseInt(periodo.slice(0,4));
+  var labels=MNAMES.map(function(m,i){return m;});
+  // Filtrar por resp, cat (sin filtro de período ni canal para poder separar)
+  var base=deals.filter(function(d){
+    return d.estado==='Trato ganado'&&
+      (resp==='all'||d.resp===resp)&&
+      (cat==='all'||d.cat===cat)&&
+      (d.fecha_ganado||'').startsWith(String(year));
+  });
+  var corp=new Array(12).fill(0);
+  var ws=new Array(12).fill(0);
+  base.forEach(function(d){
+    var m=d.fecha_ganado?parseInt(d.fecha_ganado.slice(5,7))-1:-1;
+    if(m<0)return;
+    if(d.canal==='WS')ws[m]+=Number(d.monto)||0;
+    else corp[m]+=Number(d.monto)||0;
+  });
+  var title='Ventas Ganadas '+year+(canal!=='all'?' · '+canal:'');
+  document.getElementById('monthly-chart-title').textContent=title;
+  destroyChart('chartMensual');
+  var datasets=[];
+  if(canal==='all'||canal==='Corporativo')datasets.push({label:'Corporativo',data:corp,backgroundColor:'#3b82f6',borderRadius:4});
+  if(canal==='all'||canal==='WS')datasets.push({label:'WS',data:ws,backgroundColor:'#8b5cf6',borderRadius:4});
+  charts['chartMensual']=new Chart(document.getElementById('chartMensual'),{
+    type:'bar',
+    data:{labels:labels,datasets:datasets},
+    options:{
+      scales:{
+        x:{ticks:{color:'#94a3b8'},grid:{color:'#2a3347'}},
+        y:{ticks:{color:'#94a3b8',callback:function(v){return v>=1000000?'$'+(v/1000000).toFixed(1)+'M':v>=1000?'$'+(v/1000).toFixed(0)+'K':'$'+v;}},grid:{color:'#2a3347'}}
+      },
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': $'+Number(ctx.raw).toLocaleString('es-CL');}}}},
+      barPercentage:.7
+    }
+  });
+}
+
 function renderDashboard(){
   var d=getFiltered();
   var gan=d.filter(function(x){return x.estado==='Trato ganado';});
@@ -850,6 +900,7 @@ function renderDashboard(){
     onClick:function(e,elements){if(!elements.length)return;var reason=reasons[elements[0].index];var filtered=getFiltered().filter(function(x){return x.razon_perdida===reason;});openDrillDown('Pérdida: '+reason,filtered);},
     onHover:function(e){e.native.target.style.cursor='pointer';}}
   });
+  renderMonthlyChart();
 }
 
 function renderFunnel(){
